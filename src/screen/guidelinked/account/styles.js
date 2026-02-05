@@ -1,0 +1,121 @@
+import {Platform, StyleSheet} from 'react-native';
+import {COLORS} from '../../../util/Theme';
+
+export const styles = StyleSheet.create({
+  card: {
+    backgroundColor: '#fff',
+    marginTop: 10,
+    marginBottom: 10,
+    borderRadius: 10,
+    padding: 10,
+    width: '90%',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+    borderColor: COLORS.red,
+    borderWidth: 1,
+  },
+
+  deleteDesc: {
+    fontSize: 14,
+    color: COLORS.black,
+    marginTop: 5,
+    marginBottom: 2,
+    color: COLORS.darkRed,
+  },
+
+  phoneContainerStyle: {
+    backgroundColor: COLORS.white,
+    color: COLORS.black,
+    borderRadius: 10,
+    height: 52,
+    borderColor: COLORS.gray,
+    marginBottom: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    alignSelf: 'center',
+    // width: wp('92%'),
+    width: 'auto',
+  },
+  phoneTextContainerStyle: {
+    borderTopRightRadius: 10,
+    borderBottomRightRadius: 10,
+    height: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row', // Ensures inline alignment
+    backgroundColor: COLORS.white,
+  },
+  phoneFlagBtnStyle: {
+    backgroundColor: COLORS.white,
+    width: 62,
+    height: 46,
+    borderTopLeftRadius: 10,
+    borderBottomLeftRadius: 10,
+    overflow: 'hidden',
+    alignSelf: 'center',
+  },
+  phoneTextInputStyle: {
+    backgroundColor: COLORS.white,
+    marginStart: -5,
+    height: 45,
+    fontSize: 14,
+    padding: 0,
+    color: COLORS.black,
+  },
+  countrycodeStyle: {
+    height: 28,
+    paddingVertical: Platform.OS == 'ios' ? 5 : 4,
+    marginStart: -5,
+    backgroundColor: COLORS.white,
+    color: COLORS.black,
+    fontSize: 14,
+    fontWeight: 'normal',
+    textAlign: 'center',
+  },
+  //drop down
+  dropdownTitle: {color: COLORS.black, fontSize: 14},
+  dropdownLabel: {color: COLORS.black, fontSize: 15, paddingStart: 10},
+  dropdownicon: {tintColor: COLORS.black, height: 18, width: 18, marginEnd: 10},
+  dropdoenContainer: {
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.gray,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: Platform.OS === 'ios' ? 12 : 6,
+    //width: wp('92%')
+    height: 52,
+    alignSelf: 'center',
+    fontSize: 14,
+    marginBottom: 15,
+  },
+  dropdownPlaceholder: {color: COLORS.black, fontSize: 14, fontWeight: 'bold'},
+  removeBtn: {
+    justifyContent: 'center', // Vertically center content
+    alignItems: 'center', // Horizontally center content
+    paddingHorizontal: 10,
+    marginBottom: 12,
+    paddingBottom: 10,
+  },
+  input: {
+    borderColor: COLORS.gray,
+    marginBottom: 12,
+    borderWidth: 1,
+    color: COLORS.black,
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    paddingVertical: Platform.OS == 'ios' && 12,
+    //  width:wp('92%'),
+  },
+  myProfile: {
+    textAlign: 'center',
+    fontSize: 18,
+    color: COLORS.primary,
+    fontWeight: 'bold',
+    marginTop: 20,
+  },
+  label: {fontSize: 14, color: COLORS.black, marginBottom: 2},
+});

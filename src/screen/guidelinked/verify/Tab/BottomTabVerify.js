@@ -1,0 +1,183 @@
+import {StyleSheet, Text, View, Animated} from 'react-native';
+import React, {useState} from 'react';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+
+import {useSelector} from 'react-redux';
+import {COLORS} from '../../../../util/Theme';
+import AppIcons from '../../../../component/AppIcons';
+import ic_home from '../../../../assets/images/ic_home.png';
+import ic_my_bookings from '../../../../assets/images/my-bookings.png';
+import EmailVerifyIndex from '../Index';
+import BookingIndex from '../../booking/BookingIndex';
+import ExpertIndex from '../../expert';
+import {Image} from 'react-native';
+import {DefaultStyle} from '../../../../util/ConstVar';
+import {log} from '../../../../util/Toast';
+import HomeIndex from '../../home/HomeIndex';
+
+const Tab = createBottomTabNavigator();
+
+const BottomTabVerify = ({route}) => {
+  const isOffline = useSelector(s => s.NetworkStatus.status);
+  const [Change, setChange] = useState(route.params.name);
+
+  if (!isOffline) {
+    return <NetworkError />;
+  }
+
+  return (
+    <Tab.Navigator
+      initialRouteName="EmailVerifyIndex"
+      screenOptions={{
+        tabBarStyle: {
+          backgroundColor: COLORS.primary,
+          borderTopColor: 'transparent',
+          height: 70,
+          position: 'absolute',
+          left: 10,
+          right: 10,
+          bottom: 10,
+          borderRadius: 40,
+          elevation: 0,
+          ...styles.shadow,
+        },
+      }}>
+      <Tab.Screen
+        name="EmailVerifyIndex"
+        component={Change == 1 ? EmailVerifyIndex : HomeIndex}
+        options={{
+          headerShown: false,
+          headerShadowVisible: false,
+
+          tabBarIcon: ({focused}) => (
+            <View style={{marginTop: 0, marginStart: 10}}>
+              <Image
+                source={ic_home}
+                style={DefaultStyle.tabIcon}
+                resizeMode="contain"
+              />
+            </View>
+          ),
+          tabBarShowLabel: true,
+          tabBarLabel: ({focused}) => (
+            <Text
+              style={[
+                styles.label,
+                {
+                  color: focused ? COLORS.white : COLORS.white,
+                  marginStart: 10,
+                },
+              ]}>
+              HOME
+            </Text>
+          ),
+        }}
+        listeners={{
+          tabPress: () => {
+            setChange(2); // Set to 1 when ProfileIndex tab is pressed
+          },
+        }}
+      />
+
+      <Tab.Screen
+        name="EMLBookingIndex"
+        component={BookingIndex}
+        options={{
+          headerShown: false,
+          headerShadowVisible: false,
+
+          tabBarIcon: ({focused}) => (
+            <View style={{marginTop: 0, marginStart: 10}}>
+              <Image
+                source={ic_my_bookings}
+                style={DefaultStyle.tabIcon}
+                resizeMode="contain"
+              />
+            </View>
+          ),
+          tabBarShowLabel: true,
+          tabBarLabel: ({focused}) => (
+            <Text
+              style={[
+                styles.label,
+                {
+                  color: focused ? COLORS.white : COLORS.white,
+                  marginStart: 10,
+                },
+              ]}>
+              BOOKINGS
+            </Text>
+          ),
+        }}
+      />
+
+      <Tab.Screen
+        name="EMLExpertIndex"
+        component={ExpertIndex}
+        options={{
+          headerShown: false,
+          headerShadowVisible: false,
+
+          tabBarIcon: ({focused}) => (
+            <View style={{marginTop: 0, marginStart: 10}}>
+              <AppIcons
+                type={'Feather'}
+                name={'calendar'}
+                size={20}
+                color={focused ? COLORS.white : COLORS.white}
+              />
+            </View>
+          ),
+          tabBarShowLabel: true,
+          tabBarLabel: ({focused}) => (
+            <Text
+              style={[
+                styles.label,
+                {
+                  color: focused ? COLORS.white : COLORS.white,
+                  marginStart: 10,
+                },
+              ]}>
+              EXPERT
+            </Text>
+          ),
+        }}
+      />
+    </Tab.Navigator>
+  );
+};
+
+export default BottomTabVerify;
+
+const styles = StyleSheet.create({
+  shadow: {
+    elevation: 0, // for Android
+    shadowOffset: {
+      width: 0,
+      height: 10, // for iOS
+    },
+    shadowColor: COLORS.primary,
+    shadowOpacity: 0.25,
+    shadowRadius: 3.5,
+    elevation: 5,
+  },
+
+  tabBarIcon: {
+    height: 20,
+    width: 20,
+    marginTop: 0,
+    tintColor: COLORS.white,
+    // backgroundColor: COLORS.white,
+  },
+  tabBarIconFocused: {
+    // height: 28,
+    // width: 28,
+    marginTop: 0,
+    height: 20,
+    width: 20,
+    // backgroundColor: COLORS.white,
+    tintColor: COLORS.primary,
+  },
+
+  label: {fontSize: 12, marginBottom: 12, marginTop: -10},
+});
