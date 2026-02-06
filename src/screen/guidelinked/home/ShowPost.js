@@ -12,6 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Dimensions,
+  Animated,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import BottomTab from '../../../component/BottomTab';
@@ -71,6 +72,26 @@ const ShowPost = ({navigation}) => {
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [imageModalImages, setImageModalImages] = useState([]);
   const [imageModalIndex, setImageModalIndex] = useState(0);
+
+  // Aura button animation – shared, more visible pulse + wobble
+  const auraPulse = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(auraPulse, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(auraPulse, {
+          toValue: 0,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+  }, [auraPulse]);
 
   const openImageModal = (images, index = 0) => {
     const list = Array.isArray(images) ? images : [];
@@ -151,7 +172,7 @@ const ShowPost = ({navigation}) => {
       action:
         raw.action ??
         (raw.type === 'question' ? 'Asked a question' : 'Added a post'),
-      timeAgo: raw.created_post ?? raw.time_ago ?? raw.created_at ?? '',
+      timeAgo: raw.formated_created_at ?? raw.created_post ?? raw.time_ago ?? raw.created_at ?? '',
       content: raw.content ?? raw.description ?? raw.text ?? '',
       hashtags: arr(raw.hashtags).map(h =>
         typeof h === 'string' ? h : h?.tag ?? '',
@@ -284,18 +305,23 @@ const ShowPost = ({navigation}) => {
 
   const handleDeletePost = async postId => {
     if (!token || deletingPostId != null) return;
+    if (postId == null || postId === '') {
+      showToast('Invalid post');
+      return;
+    }
     setDeletingPostId(postId);
     try {
       const formdata = new FormData();
       formdata.append('post_id', String(postId));
-      const res = await fetch(BASE_URL + API_TIMELINE_POST_DELETE, {
-        method: 'POST',
-        headers: {Authorization: `Bearer ${token}`},
-        body: formdata,
-      });
-      const data = await res.json().catch(() => ({}));
-      if (data?.status === 'RC200') {
-        setPosts(prev => prev.filter(p => p.id !== postId));
+      // Use Api instance so request has same auth, base URL and Content-Type as rest of app
+      const data = await Api.post(API_TIMELINE_POST_DELETE, formdata);
+      const isSuccess =
+        data?.status === 'RC200' ||
+        data?.status === 200 ||
+        data?.status === '200' ||
+        data?.success === true;
+      if (isSuccess) {
+        setPosts(prev => prev.filter(p => String(p.id) !== String(postId)));
         setOpenCommentsId(prev => (prev === postId ? null : prev));
         setComments(prev => {
           const next = {...prev};
@@ -311,7 +337,7 @@ const ShowPost = ({navigation}) => {
       } else if (data?.message) {
         showToast(data.message);
       } else {
-        showToast('Could not delete post');
+        showToast(data?.message || 'Could not delete post');
       }
     } catch (e) {
       console.error('Delete post error:', e);
@@ -576,11 +602,13 @@ const ShowPost = ({navigation}) => {
         null,
       text: raw.comment ?? raw.text ?? raw.content ?? '',
       timeAgo:
+        raw.formated_created_at ??
         raw.created_comment ??
         raw.created_post ??
         raw.time_ago ??
         raw.created_at ??
         raw.createdAt ??
+       
         '',
       likes: raw.likes ?? raw.likes_count ?? 0,
       isLiked: !!(raw.is_liked ?? raw.isLiked ?? raw.is_comment_liked),
@@ -705,8 +733,9 @@ const ShowPost = ({navigation}) => {
                 <Icon name="more-horizontal" size={20} color={COLORS.black} />
               </View>
             }
-            options={['Edit', 'Delete']}
+            options={['Delete', 'Edit','']}
             actions={[
+              () => handleDeletePost(item.id),
               () => {
                 navigation.navigate('AddQuestion', {
                   editPost: true,
@@ -715,9 +744,15 @@ const ShowPost = ({navigation}) => {
                   images: Array.isArray(item.images) ? item.images : [],
                 });
               },
-              () => handleDeletePost(item.id),
+              () => {  navigation.navigate('AddQuestion', {
+                editPost: true,
+                postId: item.id,
+                content: item.content,
+                images: Array.isArray(item.images) ? item.images : [],
+              });},
+              () => {},
             ]}
-            destructiveIndex={Platform.OS === 'ios' ? 1 : undefined}
+            destructiveIndex={0}
           />
         </View>
 
@@ -858,16 +893,34 @@ const ShowPost = ({navigation}) => {
             </Text>
           </TouchableOpacity>
           <View style={styles.engagementItem}>
-            <TouchableOpacity
-              style={styles.engagementLikeIconBtn}
-              onPress={() => handleAura(item.id, item.isAuraGiven)}
-              disabled={auraPostId === item.id}>
-              <Image
-                source={require('../../../assets/images/image.png')}
-                style={styles.auraIcon}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
+            <Animated.View
+              style={{
+                transform: [
+                  {
+                    scale: auraPulse.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [1, 1.25], // bigger pop
+                    }),
+                  },
+                  {
+                    rotate: auraPulse.interpolate({
+                      inputRange: [0, 0.5, 1],
+                      outputRange: ['-6deg', '0deg', '6deg'], // subtle wobble
+                    }),
+                  },
+                ],
+              }}>
+              <TouchableOpacity
+                style={styles.engagementLikeIconBtn}
+                onPress={() => handleAura(item.id, item.isAuraGiven)}
+                disabled={auraPostId === item.id}>
+                <Image
+                  source={require('../../../assets/images/image.png')}
+                  style={styles.auraIcon}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+            </Animated.View>
             <TouchableOpacity
               style={styles.engagementLikesTextBtn}
               onPress={() => openAuraModal(item.id)}
@@ -1125,14 +1178,6 @@ const ShowPost = ({navigation}) => {
           <View>
             <BottomTab onHomePress={scrollToTop} />
           </View>
-
-          {/* Floating + button to add new post */}
-          <TouchableOpacity
-            activeOpacity={0.85}
-            style={styles.fab}
-            onPress={() => navigation.navigate('AddQuestion', {startTab: 'post'})}>
-            <Icon name="plus" size={24} color={COLORS.white} />
-          </TouchableOpacity>
         </View>
 
       {/* Likes List Modal */}

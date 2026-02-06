@@ -95,20 +95,20 @@ const QuestionAnswers = ({navigation}) => {
     }
   };
 
-  const formatAnswerTime = v => {
-    if (!v) return '';
-    try {
-      const d = new Date(v);
-      if (isNaN(d.getTime())) return '';
-      return d.toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      });
-    } catch {
-      return '';
-    }
-  };
+  // const formatAnswerTime = v => {
+  //   if (!v) return '';
+  //   try {
+  //     const d = new Date(v);
+  //     if (isNaN(d.getTime())) return '';
+  //     return d.toLocaleDateString('en-GB', {
+  //       day: '2-digit',
+  //       month: 'short',
+  //       year: 'numeric',
+  //     });
+  //   } catch {
+  //     return '';
+  //   }
+  // };
 
   const mapQuestionFromApi = raw => {
     const q = raw.question || {};
@@ -178,7 +178,7 @@ const QuestionAnswers = ({navigation}) => {
         paidContent: paidContent || '',
         price: Number.isFinite(price) ? price : 49,
         timeAgo:
-          formatAnswerTime(a.answer_created_at ?? a.created_at) ||
+          (a.formated_created_at ?? a.answer_created_at ?? a.created_at) ||
           a.time_ago ||
           '',
         userName:
@@ -223,6 +223,7 @@ const QuestionAnswers = ({navigation}) => {
       userAvatar,
       action: 'Asked a question',
       timeAgo:
+      raw.formated_created_at ??
         raw.created_question ??
         raw.created_post ??
         raw.time_ago ??
@@ -583,7 +584,7 @@ const QuestionAnswers = ({navigation}) => {
                           {ans.userName}
                         </Text>
                         {ans.timeAgo ? (
-                          <Text style={styles.answerTime}>{formatTimeAgo(ans.timeAgo)}</Text>
+                          <Text style={styles.answerTime}>{ans.timeAgo}</Text>
                         ) : null}
                       </View>
                     </View>
@@ -708,15 +709,6 @@ const QuestionAnswers = ({navigation}) => {
         <View>
           <BottomTab onHomePress={scrollToTop} />
         </View>
-
-        <TouchableOpacity
-          activeOpacity={0.85}
-          style={styles.fab}
-          onPress={() =>
-            navigation.navigate('AddQuestion', {startTab: 'question'})
-          }>
-          <Icon name="plus" size={24} color={COLORS.white} />
-        </TouchableOpacity>
       </View>
 
       {/* Add Answer Modal */}

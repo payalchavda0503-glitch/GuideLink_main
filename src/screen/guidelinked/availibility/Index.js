@@ -31,10 +31,10 @@ import BottomTab from '../../../component/BottomTab';
 import {Button} from '@rneui/themed';
 import {DefaultStyle} from '../../../util/ConstVar';
 import {CustomCancelTimeSlotDialog} from '../../../component/customDialog';
-import ExpandCollapseView from './ExpandCollapseView';
 import IosStatusBar from '../../../component/IosStatusBar';
 import {FlashList} from '@shopify/flash-list';
 import DayView from './DayView';
+import CalendarAvailabilityView from './CalendarAvailabilityView';
 import DeviceInfo from 'react-native-device-info';
 import HelpVideoIcon from '../HelpVideoIcon';
 
@@ -316,7 +316,9 @@ const Index = ({navigation, route}) => {
               </>
             ) : (
               <>
-                <ScrollView showsVerticalScrollIndicator={false}>
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={{paddingBottom: SIZES.height * 0.25}}>
                   {isFromGuide && (
                     <View
                       style={{
@@ -390,23 +392,10 @@ const Index = ({navigation, route}) => {
                     />
                   </View>
 
-                  <FlatList
-                    data={timeline}
-                    style={{flex: 1}}
-                    contentContainerStyle={{paddingBottom: SIZES.height * 0.25}}
-                    keyExtractor={item => `level_1_${item.label}`}
-                    //ItemSeparatorComponent={Divider}
-                    nestedScrollEnabled={false}
-                    renderItem={({item, index}) => (
-                      <ExpandCollapseView
-                        index={index}
-                        level={0}
-                        item={item}
-                        onDelete={() => {
-                          getData();
-                        }}
-                      />
-                    )}
+                  <CalendarAvailabilityView
+                    timeline={timeline}
+                    navigation={navigation}
+                    onReload={getData}
                   />
                 </ScrollView>
 

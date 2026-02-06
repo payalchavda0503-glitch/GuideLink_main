@@ -1,5 +1,5 @@
 import {useNavigation} from '@react-navigation/native';
-import React, {useRef} from 'react';
+import React from 'react';
 import {
   Image,
   Platform,
@@ -8,52 +8,13 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import RNFS from 'react-native-fs';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import Share from 'react-native-share';
 import ic_home from '../assets/images/ic_home.png';
-import ic_share from '../assets/images/ic_share.png';
 import {COLORS, SIZES} from '../util/Theme';
 import Icon from 'react-native-vector-icons/Feather';
 
 const BottomTab = ({onHomePress}) => {
   const navigation = useNavigation();
-  const base64Ref = useRef(null);
-
-  const onShare = async () => {
-    const message =
-      'Hey, Download this app and create an account! You can make money by sharing your experiences/ expertise with someone and vice versa.\n\nInstagram: https://shorturl.at/Ke5ED \n\nApple: https://shorturl.at/a5UmR \nAndroid: https://shorturl.at/xSRjQ';
-
-    const imageUrl = 'https://guidelinked.com/logo.jpg';
-    const localPath = `${RNFS.CachesDirectoryPath}/app_invite_logo.jpg`;
-
-    try {
-      let base64Data = base64Ref.current;
-
-      if (!base64Data) {
-        // Download image if not cached
-        await RNFS.downloadFile({
-          fromUrl: imageUrl,
-          toFile: localPath,
-        }).promise;
-
-        // Convert image to base64
-        base64Data = await RNFS.readFile(localPath, 'base64');
-        base64Ref.current = base64Data; // cache it for future shares
-      }
-
-      const shareOptions = {
-        title: 'Invite Friends',
-        message: message,
-        url: `data:image/jpeg;base64,${base64Data}`,
-        type: 'image/jpeg',
-      };
-
-      await Share.open(shareOptions);
-    } catch (err) {
-      console.log('Sharing failed:', err);
-    }
-  };
 
   return (
     <View style={styles.shadowContainer}>
@@ -103,21 +64,23 @@ const BottomTab = ({onHomePress}) => {
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.itemContainer} onPress={onShare}>
+        {/* Add (create post) Section */}
+        <TouchableOpacity
+          style={styles.itemContainer}
+          onPress={() => {
+            onHomePress?.();
+            navigation.navigate('AddQuestion', {startTab: 'post'});
+          }}>
           <View style={styles.iconBox}>
-            <Image
-              source={ic_share}
-              style={[styles.tabIcon, {width: 27, height: 27}]}
-              resizeMode="contain"
-            />
+            <Icon name="plus-circle" size={26} color={COLORS.white} />
           </View>
           <Text style={styles.text} numberOfLines={1} ellipsizeMode="tail">
-            Invite Friends
+            Add
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.itemContainer}
+          style={[styles.itemContainer]}
           onPress={() => {
             navigation.navigate('NotificationTabIndex');
           }}>
@@ -129,7 +92,10 @@ const BottomTab = ({onHomePress}) => {
             />
           </View>
 
-          <Text style={styles.text} numberOfLines={1} ellipsizeMode="tail">
+          <Text
+            style={[styles.text, {fontSize: 11,marginRight:1.5}]}
+            numberOfLines={2}
+            ellipsizeMode="tail">
             Notifications
           </Text>
         </TouchableOpacity>
@@ -193,9 +159,8 @@ const styles = StyleSheet.create({
     tintColor: COLORS.white,
   },
   text: {
-    minWidth: 0, // allow ellipsize + equal-width tabs
-    maxWidth: 64, // keep labels visually consistent; prevents “tight” look on long labels
-    paddingHorizontal: 0,
+    minWidth: 0,
+    paddingHorizontal: 4,
     textAlign: 'center',
     fontSize: 12,
     color: COLORS.white,

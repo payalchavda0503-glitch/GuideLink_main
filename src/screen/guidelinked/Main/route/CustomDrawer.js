@@ -23,6 +23,7 @@ import ic_home from '../../../../assets/images/ic_home.png';
 import ic_verify from '../../../../assets/images/ic_verify.png';
 import ic_work from '../../../../assets/images/ic_work.png';
 import ic_logout from '../../../../assets/images/logout.png';
+import ic_my_bookings from '../../../../assets/images/my-bookings.png';
 import profile from '../../../../assets/images/profile.png';
 import {
   CustomeImagePicker,
@@ -117,6 +118,13 @@ const CustomDrawer = () => {
       navigate: 'MyTimeline',
       type: 'Feather',
       isVector: true,
+    },
+    {
+      id: 'all-bookings',
+      img: ic_my_bookings,
+      title: 'All Bookings',
+      navigate: 'BookingTabIndex',
+      isVector: false,
     },
     {
       id: '18',
