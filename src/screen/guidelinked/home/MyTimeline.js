@@ -1566,9 +1566,29 @@ const MyTimeline = ({navigation}) => {
                       {ans.isPaid ? (
                         <>
                           {isUnlocked ? (
-                            <Text style={styles.answerText}>
-                              {(ans.paidContent || ans.text || '').toString()}
-                            </Text>
+                            <>
+                              {!!previewText && (
+                                <Text style={styles.paidPreviewText}>
+                                  {previewText}
+                                </Text>
+                              )}
+                              <Text style={styles.answerText}>
+                                {(ans.paidContent || ans.text || '').toString()}
+                              </Text>
+                              {answerUserId != null && (
+                                <TouchableOpacity
+                                  style={styles.bookGuideButton}
+                                  onPress={() =>
+                                    navigation.navigate('BookAppointment', {
+                                      UID: answerUserId,
+                                    })
+                                  }>
+                                  <Text style={styles.bookGuideButtonText}>
+                                    Book Guide
+                                  </Text>
+                                </TouchableOpacity>
+                              )}
+                            </>
                           ) : (
                             <>
                               <View style={styles.premiumCard}>
@@ -2280,6 +2300,19 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: 14,
     fontWeight: '700',
+  },
+  bookGuideButton: {
+    marginTop: 10,
+    alignSelf: 'flex-start',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    backgroundColor: COLORS.primary,
+  },
+  bookGuideButtonText: {
+    color: COLORS.white,
+    fontSize: 13,
+    fontWeight: '600',
   },
   premiumBadge: {
     flexDirection: 'row',
