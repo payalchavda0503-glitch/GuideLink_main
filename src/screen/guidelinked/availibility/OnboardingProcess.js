@@ -43,17 +43,22 @@ const OnboardingProcess = ({navigation, route}) => {
             source={{uri: route.params.INIT_URL}}
             style={{flex: 1, width: '100%'}}
             onNavigationStateChange={event => {
-              console.log('asgdfiuagsiudgauisdu');
-              console.log(event);
+              try {
+                const url = event && typeof event.url === 'string' ? event.url : '';
+                const inUrl =
+                  url && typeof url === 'string'
+                    ? url.indexOf('stripe/onboarding/return')
+                    : -1;
 
-              let inUrl = event.url.indexOf('stripe/onboarding/return');
+                console.log('Stripe onboarding navigation:', url, inUrl);
 
-              console.log(event.url, inUrl);
-
-              if (inUrl != -1) {
-                setTimeout(() => {
-                  navigation.navigate('AvailibilityTabIndex', {guide: true});
-                }, 1000);
+                if (inUrl !== -1) {
+                  setTimeout(() => {
+                    navigation.navigate('AvailibilityTabIndex', {guide: true});
+                  }, 1000);
+                }
+              } catch (e) {
+                console.log('Onboarding navigation handler error:', e);
               }
             }}
           />

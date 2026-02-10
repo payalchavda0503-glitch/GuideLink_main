@@ -27,6 +27,7 @@ import {COLORS} from '../../../util/Theme';
 import Api from '../../../service/Api';
 import {
   API_GET_PROFILE,
+  API_GET_GUIDANCE_ANSWERS,
   API_GET_GUIDANCE_MY_QUESTIONS,
   API_GET_GUIDANCE_MY_ANSWER_QUESTION,
   API_TIMELINE_POST_GET_MY_POSTS,
@@ -42,7 +43,7 @@ import {
   API_STRIPE_ANSWER_PAYMENT,
   API_GET_STRIPE_PUB_KEY,
   API_POKE_USER,
-  API_SAVE_ANSWER_PAID_HISTORY,
+  API_SCHEDULE_MY_TIMELINE,
   BASE_URL,
   WEB_URL,
 } from '../../../service/apiEndPoint';
@@ -99,6 +100,7 @@ const MyTimeline = ({navigation}) => {
   const [unlockingKey, setUnlockingKey] = useState(null);
   const [unlockedPaidAnswerKeys, setUnlockedPaidAnswerKeys] = useState({});
   const [answersExpandedByQuestion, setAnswersExpandedByQuestion] = useState({});
+  const [paidAnswerRate, setPaidAnswerRate] = useState(null);
 
   // Shared aura animation (same behaviour as ShowPost)
   const auraPulse = useRef(new Animated.Value(0)).current;
@@ -412,17 +414,128 @@ const MyTimeline = ({navigation}) => {
     }
   };
 
-  const savePaidAnswerHistory = async ({guidanceId, answerUserId, amount}) => {
-    const formdata = new FormData();
-    formdata.append('guidance_id', String(guidanceId));
-    formdata.append('answer_user_id', String(answerUserId));
-    formdata.append('amount', String(amount));
-    return await Api.post(API_SAVE_ANSWER_PAID_HISTORY, formdata);
+  const mapAnswersFromRaw = (rawAnswers) => {
+    const arr = x => (Array.isArray(x) ? x : []);
+    const isPaidAnswer = a =>
+      a.is_paid === 1 ||
+      a.is_paid === true ||
+      (a.answer_type && String(a.answer_type).toLowerCase() === 'paid') ||
+      (a.type && String(a.type).toLowerCase() === 'paid');
+    return arr(rawAnswers).map(a => {
+      const au = a.user ?? {};
+      const answerUserId =
+        a.answer_user_id ??
+        a.answerUserId ??
+        a.user_id ??
+        au.user_id ??
+        au.id ??
+        null;
+      const isGuidanceUserPayRaw = a.is_guidance_user_pay ?? a.isGuidanceUserPay ?? null;
+      const isGuidanceUserPay =
+        isGuidanceUserPayRaw === 1 ||
+        isGuidanceUserPayRaw === true ||
+        String(isGuidanceUserPayRaw) === '1';
+      const isUnlocked =
+        isGuidanceUserPay ||
+        a.is_unlocked === 1 ||
+        a.is_unlocked === true ||
+        a.is_paid_unlocked === 1 ||
+        a.is_paid_unlocked === true ||
+        a.isUnlocked === true ||
+        a.isPaidUnlocked === true;
+      const paidContentPreview =
+        a.paid_content_preview ?? a.paidContentPreview ?? a.preview ?? a.paid_preview ?? '';
+      const paidContent =
+        a.paid_content ?? a.paidContent ?? a.paid_answer ?? a.paidText ?? '';
+      const priceRaw =
+        au.per_answer_price ??
+        a.per_answer_price ??
+        a.price ??
+        a.amount ??
+        a.paid_amount ??
+        a.unlock_amount ??
+        a.unlock_price ??
+        a.paid_price ??
+        a.answer_price ??
+        a.paidAnswerPrice ??
+        null;
+      const price = Number(priceRaw);
+      const fallbackText = paidContent || paidContentPreview || '';
+      const answerId = a.answer_id ?? a.answerId ?? a.id ?? null;
+      return {
+        text: (a.answer ?? a.text) ?? fallbackText,
+        paidContentPreview: paidContentPreview || '',
+        paidContent: paidContent || '',
+        price: Number.isFinite(price) ? price : 49,
+        timeAgo:
+          (a.formated_created_at ?? a.answer_created_at ?? a.created_at) || a.time_ago || '',
+        userName: au.full_name ?? au.fullname ?? au.username ?? au.name ?? 'User',
+        userAvatar:
+          (au.profile_image && String(au.profile_image).trim()) || au.image_url || null,
+        isPaid: isPaidAnswer(a),
+        answerUserId,
+        answerId,
+        isUnlocked,
+        isGuidanceUserPay,
+      };
+    });
+  };
+
+  const fetchGuidanceAnswers = async (guidanceId, answerUserIdJustUnlocked = null) => {
+    try {
+      const res = await Api.get(`${API_GET_GUIDANCE_ANSWERS}/${String(guidanceId)}`, {
+        skipSuccessToast: true,
+      });
+      if (res?.status !== 'RC200') {
+        showToast('Could not load unlocked answer. Pull to refresh.');
+        return;
+      }
+      let rawAnswers = [];
+      const payload = res?.data ?? res;
+      if (Array.isArray(payload)) {
+        rawAnswers = payload;
+      } else if (Array.isArray(payload?.answers)) {
+        rawAnswers = payload.answers;
+      } else if (Array.isArray(payload?.data)) {
+        rawAnswers = payload.data;
+      } else if (Array.isArray(res?.answers)) {
+        rawAnswers = res.answers;
+      } else if (Array.isArray(res?.data?.answers)) {
+        rawAnswers = res.data.answers;
+      }
+      let mappedAnswers = mapAnswersFromRaw(rawAnswers);
+      if (answerUserIdJustUnlocked != null) {
+        mappedAnswers = mappedAnswers.map(ans =>
+          String(ans.answerUserId) === String(answerUserIdJustUnlocked)
+            ? {...ans, isUnlocked: true}
+            : ans,
+        );
+      }
+      setMyAnswers(prev =>
+        prev.map(q =>
+          String(q.id) === String(guidanceId)
+            ? {...q, answers: mappedAnswers}
+            : q,
+        ),
+      );
+      setMyQuestions(prev =>
+        prev.map(q =>
+          String(q.id) === String(guidanceId)
+            ? {...q, answers: mappedAnswers}
+            : q,
+        ),
+      );
+    } catch (e) {
+      log('Failed to load answers after payment', e);
+      showToast('Could not load unlocked answer. Pull to refresh.');
+    }
   };
 
   const getPublishableKeyForUnlock = async (answerId, guidanceId, answerUserId, amount, key) => {
     setUnlockingKey(key);
-    const response = await Api.get(`${API_GET_STRIPE_PUB_KEY}`);
+    const response = await Api.get(`${API_GET_STRIPE_PUB_KEY}`, {
+      skipSuccessToast: true,
+    });
     if (response.status === 'RC200') {
       setStripePublishableKey(response.data);
       get_payment_details(answerId, guidanceId, answerUserId, amount, key);
@@ -433,34 +546,74 @@ const MyTimeline = ({navigation}) => {
   };
 
   const get_payment_details = async (answerId, guidanceId, answerUserId, amount, key) => {
-    const response = await Api.get(`${API_STRIPE_ANSWER_PAYMENT}/${guidanceId}/${answerUserId}`);
-    setUnlockingKey(null);
-    if (response.status === 'RC200') {
-      const data = response.data;
+    try {
+      const response = await Api.get(`${API_STRIPE_ANSWER_PAYMENT}/${guidanceId}/${answerUserId}`, {
+        skipSuccessToast: true,
+      });
+      setUnlockingKey(null);
+      if (response.status !== 'RC200' || !response.data) {
+        showToast(response?.message || 'Unable to start payment');
+        return;
+      }
+      const data = response.data && typeof response.data === 'object' ? response.data : {};
+      const nested = data.data && typeof data.data === 'object' ? data.data : {};
+      const topLevel = typeof response === 'object' && response !== null ? response : {};
+      const src = {...nested, ...data, ...topLevel};
+      const paymentIntentSecret =
+        src.pintent_secret ??
+        src.paymentIntentClientSecret ??
+        src.payment_intent_client_secret ??
+        src.paymentIntentSecret ??
+        src.client_secret ??
+        src.intent_secret ??
+        src.secret;
+      const ephemeralKey =
+        src.ekey_secret ??
+        src.ephemeralKeySecret ??
+        src.customer_ephemeral_key_secret ??
+        src.customer_ephemeral_key ??
+        src.ephemeral_key ??
+        src.ephemeral_key_secret;
+      const customerId =
+        src.cid ?? src.customerId ?? src.customer_id ?? src.customer;
+      const displayName =
+        src.display_name ?? src.merchantDisplayName ?? src.merchant_name ?? 'GuideLinked';
+      if (!paymentIntentSecret || !customerId || !ephemeralKey) {
+        const missing = [];
+        if (!paymentIntentSecret) missing.push('payment intent');
+        if (!customerId) missing.push('customer');
+        if (!ephemeralKey) missing.push('ephemeral key');
+        console.warn('Payment setup missing:', missing.join(', '), response?.data);
+        showToast('Payment setup incomplete. Please try again later.');
+        return;
+      }
       const {error} = await initPaymentSheet({
-        merchantDisplayName: data.display_name,
-        customerId: data.cid,
-        customerEphemeralKeySecret: data.ekey_secret,
-        paymentIntentClientSecret: data.pintent_secret,
+        merchantDisplayName: displayName,
+        customerId,
+        customerEphemeralKeySecret: ephemeralKey,
+        paymentIntentClientSecret: paymentIntentSecret,
         allowsDelayedPaymentMethods: true,
         ...(Platform.OS === 'ios' ? {returnURL: 'guidelinked://stripe-redirect'} : {}),
       });
       if (error) {
-        showToast('Something went wrong, Please try again...');
+        const msg =
+          (error?.message && String(error.message).trim()) ||
+          'Payment could not be started. Please try again.';
+        showToast(msg);
         return;
       }
       const {error: Err} = await presentPaymentSheet();
       if (Err) return;
+
+      setUnlockedPaidAnswerKeys(prev => ({...prev, [key]: true}));
+      await new Promise(r => setTimeout(r, 300));
+      await fetchGuidanceAnswers(guidanceId, answerUserId);
       showToast('Unlocked successfully');
-      const historyRes = await savePaidAnswerHistory({guidanceId, answerUserId, amount});
-      if (historyRes?.status === 'RC200') {
-        setUnlockedPaidAnswerKeys(prev => ({...prev, [key]: true}));
-        if (userId != null) fetchMyAnswers();
-      } else {
-        showToast(historyRes?.message || 'Payment done, but failed to save history');
-      }
-    } else {
-      showToast(response?.message || 'Unable to start payment');
+    } catch (e) {
+      setUnlockingKey(null);
+      const msg =
+        e?.message ?? e?.response?.data?.message ?? 'Payment failed. Please try again.';
+      showToast(typeof msg === 'string' ? msg : 'Payment failed. Please try again.');
     }
   };
 
@@ -901,6 +1054,28 @@ const MyTimeline = ({navigation}) => {
     setRefreshing(false);
   }, [userId, loadAll]);
 
+  const loadPaidAnswerRateFromSchedule = useCallback(async () => {
+    try {
+      const res = await Api.get(`${API_SCHEDULE_MY_TIMELINE}`);
+      if (res?.status === 'RC200' && res?.data) {
+        const data = res.data;
+        const rawRate =
+          data.paid_answer_rate ??
+          data.paidAnswerRate ??
+          data.answer_rate ??
+          data.answerRate ??
+          data.answer_rates ??
+          null;
+        const num = Number(rawRate);
+        if (Number.isFinite(num) && num > 0) {
+          setPaidAnswerRate(num);
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       let mounted = true;
@@ -908,9 +1083,10 @@ const MyTimeline = ({navigation}) => {
         const uid = await fetchProfile();
         if (mounted && uid != null) await loadAll(uid);
         if (mounted) getPublishableKey();
+        if (mounted) loadPaidAnswerRateFromSchedule();
       })();
       return () => { mounted = false; };
-    }, [loadAll]),
+    }, [loadAll, loadPaidAnswerRateFromSchedule]),
   );
 
   useEffect(() => {
@@ -922,6 +1098,10 @@ const MyTimeline = ({navigation}) => {
       console.log('My questions answer tab – list:', myAnswers);
     }
   }, [activeTab, myAnswers]);
+
+  const parsedPaidAnswerRate = Number(paidAnswerRate);
+  const isPaidAnswerRateZero =
+    !Number.isFinite(parsedPaidAnswerRate) || parsedPaidAnswerRate <= 0;
 
   const data =
     activeTab === 'my_post'
@@ -1297,7 +1477,7 @@ const MyTimeline = ({navigation}) => {
                 setSelectedQuestion({id: item.id, userId: item.userId});
                 setAnswerModalVisible(true);
               }}>
-              <Text style={styles.writeAnswerBtnText}>Write Answer</Text>
+              <Text style={styles.writeAnswerBtnText}>Answer this?</Text>
             </TouchableOpacity>
           </View>
 
@@ -1695,6 +1875,13 @@ const MyTimeline = ({navigation}) => {
                   numberOfLines={8}
                   textAlignVertical="top"
                 />
+              ) : isPaidAnswerRateZero ? (
+                <View style={styles.answerModalPaidInfoContainer}>
+                  <Text style={styles.answerModalPaidInfoText}>
+                    First select your paid answer rate on the Time Slots / Rate
+                    page, then proceed.
+                  </Text>
+                </View>
               ) : (
                 <View style={styles.answerModalPaidContainer}>
                   <TextInput
@@ -1737,6 +1924,12 @@ const MyTimeline = ({navigation}) => {
                     });
                   }
                 } else {
+                  if (isPaidAnswerRateZero) {
+                    setAnswerModalVisible(false);
+                    setSelectedQuestion(null);
+                    navigation.navigate('AvailibilityTabIndex', {guide: true});
+                    return;
+                  }
                   if (paidAnswerOverview.trim() && paidAnswerText.trim()) {
                     handlePokeAnswer({
                       questionId: selectedQuestion.id,
@@ -2524,6 +2717,17 @@ const styles = StyleSheet.create({
   answerModalContent: {
     minHeight: 280,
     marginBottom: 20,
+  },
+  answerModalPaidInfoContainer: {
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    justifyContent: 'center',
+  },
+  answerModalPaidInfoText: {
+    fontSize: 14,
+    color: COLORS.black2,
+    textAlign: 'center',
+    lineHeight: 22,
   },
   answerModalPaidContainer: {
     flex: 1,

@@ -173,6 +173,11 @@ const AccountSetting = ({navigation}) => {
     }, []),
   );
 
+  const safeDefaultCode =
+    typeof countryChar === 'string' && countryChar.length === 2
+      ? countryChar.toUpperCase()
+      : 'IN';
+
   return (
     <>
       <IosStatusBar backgroundColor={COLORS.primary} />
@@ -233,7 +238,7 @@ const AccountSetting = ({navigation}) => {
               <View>
                 <PhoneInput
                   value={phone}
-                  defaultCode={countryChar}
+                  defaultCode={safeDefaultCode}
                   disableArrowIcon={false}
                   textSearchProps={{placeholder: 'Enter country name'}}
                   placeholder="Phone Number"
@@ -246,8 +251,12 @@ const AccountSetting = ({navigation}) => {
                   }}
                   textInputStyle={styles.phoneTextInputStyle}
                   onChangeCountry={txt => {
-                    setCountryChar(txt.cca2);
-                    setCountryCode(txt.callingCode[0]);
+                    if (txt?.cca2) {
+                      setCountryChar(txt.cca2);
+                    }
+                    if (Array.isArray(txt?.callingCode) && txt.callingCode.length > 0) {
+                      setCountryCode(txt.callingCode[0] ?? '');
+                    }
                   }}
                   withDarkTheme={false}
                   codeTextStyle={[styles.countrycodeStyle]}
@@ -358,7 +367,7 @@ const AccountSetting = ({navigation}) => {
           />
         </ScrollView>
       </View>
-      <View style={{position: 'absolute', bottom: 0}}>
+      <View>
         <BottomTab />
       </View>
     </>

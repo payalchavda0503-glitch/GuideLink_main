@@ -113,10 +113,6 @@ const AddQuestion = ({navigation, route}) => {
 
   const handleSubmit = async () => {
     if (activeTab === 'question') {
-      if (!selectedCategory) {
-        showToast('Please select a category');
-        return;
-      }
       if (!heading.trim()) {
         showToast('Please enter a heading for your question');
         return;

@@ -24,10 +24,11 @@ import FastImage from 'react-native-fast-image';
 import Api from '../../../service/Api';
 import {
   API_GET_GUIDANCE_DATA,
+  API_GET_GUIDANCE_ANSWERS,
   API_STRIPE_ANSWER_PAYMENT,
   API_GET_STRIPE_PUB_KEY,
   API_POKE_USER,
-  API_SAVE_ANSWER_PAID_HISTORY,
+  API_SCHEDULE_MY_TIMELINE,
   BASE_URL,
 } from '../../../service/apiEndPoint';
 import {
@@ -58,6 +59,7 @@ const QuestionAnswers = ({navigation}) => {
   const [unlockingKey, setUnlockingKey] = useState(null);
   const [unlockedPaidAnswerKeys, setUnlockedPaidAnswerKeys] = useState({});
   const [answersExpandedByQuestion, setAnswersExpandedByQuestion] = useState({});
+  const [paidAnswerRate, setPaidAnswerRate] = useState(null);
   const token = useSelector(s => s.AuthSlice?.token);
   const flatListRef = useRef(null);
 
@@ -75,15 +77,6 @@ const QuestionAnswers = ({navigation}) => {
     flatListRef.current?.scrollToOffset({offset: 0, animated: true});
   };
 
-  useFocusEffect(
-    React.useCallback(() => {
-      setQuestionsPage(1);
-      setQuestionsHasMore(true);
-      fetchQuestions(1);
-      getPublishableKey();
-    }, []),
-  );
-
   const getPublishableKey = async () => {
     try {
       const response = await Api.get(`${API_GET_STRIPE_PUB_KEY}`);
@@ -94,6 +87,38 @@ const QuestionAnswers = ({navigation}) => {
       console.error('Stripe publishable key error:', e);
     }
   };
+
+  const loadPaidAnswerRateFromSchedule = async () => {
+    try {
+      const res = await Api.get(`${API_SCHEDULE_MY_TIMELINE}`);
+      if (res?.status === 'RC200' && res?.data) {
+        const data = res.data;
+        const rawRate =
+          data.paid_answer_rate ??
+          data.paidAnswerRate ??
+          data.answer_rate ??
+          data.answerRate ??
+          data.answer_rates ??
+          null;
+        const num = Number(rawRate);
+        if (Number.isFinite(num) && num > 0) {
+          setPaidAnswerRate(num);
+        }
+      }
+    } catch (e) {
+      // Ignore – we'll fall back to deriving rate from guidance answers
+    }
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      setQuestionsPage(1);
+      setQuestionsHasMore(true);
+      fetchQuestions(1);
+      getPublishableKey();
+      loadPaidAnswerRateFromSchedule();
+    }, []),
+  );
 
   // const formatAnswerTime = v => {
   //   if (!v) return '';
@@ -111,6 +136,7 @@ const QuestionAnswers = ({navigation}) => {
   // };
 
   const mapQuestionFromApi = raw => {
+    console.log("mapQuestionFromAPI1111111",raw?.user)
     const q = raw.question || {};
     const title = q.question ?? raw.question_text ?? '';
     const desc = q.questionDesc ?? q.question_desc ?? raw.question_desc ?? '';
@@ -240,12 +266,124 @@ const QuestionAnswers = ({navigation}) => {
     };
   };
 
-  const savePaidAnswerHistory = async ({guidanceId, answerUserId, amount}) => {
-    const formdata = new FormData();
-    formdata.append('guidance_id', String(guidanceId));
-    formdata.append('answer_user_id', String(answerUserId));
-    formdata.append('amount', String(amount));
-    return await Api.post(API_SAVE_ANSWER_PAID_HISTORY, formdata);
+  const mapAnswersFromRaw = rawAnswers => {
+    const arr = x => (Array.isArray(x) ? x : []);
+    const isPaidAnswer = a =>
+      a.is_paid === 1 ||
+      a.is_paid === true ||
+      (a.answer_type && String(a.answer_type).toLowerCase() === 'paid') ||
+      (a.type && String(a.type).toLowerCase() === 'paid');
+    return arr(rawAnswers).map(a => {
+      const au = a.user ?? {};
+      const answerUserId =
+        a.answer_user_id ??
+        a.answerUserId ??
+        a.user_id ??
+        au.user_id ??
+        au.id ??
+        null;
+      const isGuidanceUserPayRaw =
+        a.is_guidance_user_pay ?? a.isGuidanceUserPay ?? null;
+      const isGuidanceUserPay =
+        isGuidanceUserPayRaw === 1 ||
+        isGuidanceUserPayRaw === true ||
+        String(isGuidanceUserPayRaw) === '1';
+      const isUnlocked =
+        isGuidanceUserPay ||
+        a.is_unlocked === 1 ||
+        a.is_unlocked === true ||
+        a.is_paid_unlocked === 1 ||
+        a.is_paid_unlocked === true ||
+        a.isUnlocked === true ||
+        a.isPaidUnlocked === true;
+      const paidContentPreview =
+        a.paid_content_preview ??
+        a.paidContentPreview ??
+        a.preview ??
+        a.paid_preview ??
+        '';
+      const paidContent =
+        a.paid_content ?? a.paidContent ?? a.paid_answer ?? a.paidText ?? '';
+      const priceRaw =
+        au.per_answer_price ??
+        a.per_answer_price ??
+        a.price ??
+        a.amount ??
+        a.paid_amount ??
+        a.unlock_amount ??
+        a.unlock_price ??
+        a.paid_price ??
+        a.answer_price ??
+        a.paidAnswerPrice ??
+        null;
+      const price = Number(priceRaw);
+      const fallbackText = paidContent || paidContentPreview || '';
+      const answerId = a.answer_id ?? a.answerId ?? a.id ?? null;
+      return {
+        text: a.answer ?? a.text ?? fallbackText,
+        paidContentPreview: paidContentPreview || '',
+        paidContent: paidContent || '',
+        price: Number.isFinite(price) ? price : 49,
+        timeAgo:
+          (a.formated_created_at ?? a.answer_created_at ?? a.created_at) ||
+          a.time_ago ||
+          '',
+        userName:
+          au.full_name ?? au.fullname ?? au.username ?? au.name ?? 'User',
+        userAvatar:
+          (au.profile_image && String(au.profile_image).trim()) ||
+          au.image_url ||
+          null,
+        isPaid: isPaidAnswer(a),
+        answerUserId,
+        answerId,
+        isUnlocked,
+        isGuidanceUserPay,
+      };
+    });
+  };
+
+  const fetchGuidanceAnswers = async (guidanceId, answerUserIdJustUnlocked = null) => {
+    try {
+      const res = await Api.get(`${API_GET_GUIDANCE_ANSWERS}/${String(guidanceId)}`, {
+        skipSuccessToast: true,
+      });
+      if (res?.status !== 'RC200') {
+        showToast('Could not load unlocked answer. Pull to refresh.');
+        return;
+      }
+      let rawAnswers = [];
+      const payload = res?.data ?? res;
+      if (Array.isArray(payload)) {
+        rawAnswers = payload;
+      } else if (Array.isArray(payload?.answers)) {
+        rawAnswers = payload.answers;
+      } else if (Array.isArray(payload?.data)) {
+        rawAnswers = payload.data;
+      } else if (Array.isArray(res?.answers)) {
+        rawAnswers = res.answers;
+      } else if (Array.isArray(res?.data?.answers)) {
+        rawAnswers = res.data.answers;
+      }
+      let mappedAnswers = mapAnswersFromRaw(rawAnswers);
+      if (answerUserIdJustUnlocked != null) {
+        mappedAnswers = mappedAnswers.map(ans =>
+          String(ans.answerUserId) === String(answerUserIdJustUnlocked)
+            ? {...ans, isUnlocked: true}
+            : ans,
+        );
+      }
+      setQuestions(prev =>
+        prev.map(q =>
+          String(q.id) === String(guidanceId)
+            ? {...q, answers: mappedAnswers}
+            : q,
+        ),
+      );
+    } catch (e) {
+      log('Failed to load answers after payment', e);
+      showToast('Could not load unlocked answer. Pull to refresh.');
+    }
   };
 
   const getPublishableKeyForUnlock = async (
@@ -256,7 +394,9 @@ const QuestionAnswers = ({navigation}) => {
     key,
   ) => {
     setUnlockingKey(key);
-    const response = await Api.get(`${API_GET_STRIPE_PUB_KEY}`);
+    const response = await Api.get(`${API_GET_STRIPE_PUB_KEY}`, {
+      skipSuccessToast: true,
+    });
     if (response.status == 'RC200') {
       setStripePublishableKey(response.data);
       get_payment_details(answerId, guidanceId, answerUserId, amount, key);
@@ -273,19 +413,57 @@ const QuestionAnswers = ({navigation}) => {
     amount,
     key,
   ) => {
-    const response = await Api.get(
-      `${API_STRIPE_ANSWER_PAYMENT}/${guidanceId}/${answerUserId}`,
-    );
-    setUnlockingKey(null);
+    try {
+      const response = await Api.get(
+        `${API_STRIPE_ANSWER_PAYMENT}/${guidanceId}/${answerUserId}`,
+        {skipSuccessToast: true},
+      );
+      setUnlockingKey(null);
 
-    if (response.status == 'RC200') {
-      const data = response.data;
+      if (response.status != 'RC200' || !response.data) {
+        showToast(response?.message || 'Unable to start payment');
+        return;
+      }
+
+      const data = response.data && typeof response.data === 'object' ? response.data : {};
+      const nested = data.data && typeof data.data === 'object' ? data.data : {};
+      const topLevel = typeof response === 'object' && response !== null ? response : {};
+      const src = {...nested, ...data, ...topLevel};
+      const paymentIntentSecret =
+        src.pintent_secret ??
+        src.paymentIntentClientSecret ??
+        src.payment_intent_client_secret ??
+        src.paymentIntentSecret ??
+        src.client_secret ??
+        src.intent_secret ??
+        src.secret;
+      const ephemeralKey =
+        src.ekey_secret ??
+        src.ephemeralKeySecret ??
+        src.customer_ephemeral_key_secret ??
+        src.customer_ephemeral_key ??
+        src.ephemeral_key ??
+        src.ephemeral_key_secret;
+      const customerId =
+        src.cid ?? src.customerId ?? src.customer_id ?? src.customer;
+      const displayName =
+        src.display_name ?? src.merchantDisplayName ?? src.merchant_name ?? 'GuideLinked';
+
+      if (!paymentIntentSecret || !customerId || !ephemeralKey) {
+        const missing = [];
+        if (!paymentIntentSecret) missing.push('payment intent');
+        if (!customerId) missing.push('customer');
+        if (!ephemeralKey) missing.push('ephemeral key');
+        log('Payment setup missing: ' + missing.join(', '), {data: response.data});
+        showToast('Payment setup incomplete. Please try again later.');
+        return;
+      }
 
       const {error} = await initPaymentSheet({
-        merchantDisplayName: data.display_name,
-        customerId: data.cid,
-        customerEphemeralKeySecret: data.ekey_secret,
-        paymentIntentClientSecret: data.pintent_secret,
+        merchantDisplayName: displayName,
+        customerId,
+        customerEphemeralKeySecret: ephemeralKey,
+        paymentIntentClientSecret: paymentIntentSecret,
         allowsDelayedPaymentMethods: true,
         ...(Platform.OS === 'ios'
           ? {returnURL: 'guidelinked://stripe-redirect'}
@@ -293,7 +471,10 @@ const QuestionAnswers = ({navigation}) => {
       });
 
       if (error) {
-        showToast('Something went wrong, Please try again...');
+        const msg =
+          (error?.message && String(error.message).trim()) ||
+          'Payment could not be started. Please try again.';
+        showToast(msg);
         return;
       }
 
@@ -301,26 +482,17 @@ const QuestionAnswers = ({navigation}) => {
 
       if (Err) {
         return;
-      } else {
-        showToast('Unlocked successfully');
-        const historyRes = await savePaidAnswerHistory({
-          guidanceId,
-          answerUserId,
-          amount,
-        });
-        if (historyRes?.status === 'RC200') {
-          setUnlockedPaidAnswerKeys(prev => ({...prev, [key]: true}));
-          setQuestionsPage(1);
-          setQuestionsHasMore(true);
-          fetchQuestions(1);
-        } else {
-          showToast(
-            historyRes?.message || 'Payment done, but failed to save history',
-          );
-        }
       }
-    } else {
-      showToast(response?.message || 'Unable to start payment');
+
+      setUnlockedPaidAnswerKeys(prev => ({...prev, [key]: true}));
+      await new Promise(r => setTimeout(r, 300));
+      await fetchGuidanceAnswers(guidanceId, answerUserId);
+      showToast('Unlocked successfully');
+    } catch (e) {
+      setUnlockingKey(null);
+      const msg =
+        e?.message ?? e?.response?.data?.message ?? 'Payment failed. Please try again.';
+      showToast(typeof msg === 'string' ? msg : 'Payment failed. Please try again.');
     }
   };
 
@@ -344,6 +516,46 @@ const QuestionAnswers = ({navigation}) => {
       key,
     );
   };
+  const extractPaidAnswerRate = (resData, questionList) => {
+    // 1) Direct keys from API (if backend sends them)
+    if (resData) {
+      const directRaw =
+        resData.paid_answer_rate ??
+        resData.paidAnswerRate ??
+        resData.answer_rate ??
+        resData.answerRate ??
+        resData.answer_rates ??
+        null;
+      const directNum = Number(directRaw);
+      if (Number.isFinite(directNum)) {
+        return directNum;
+      }
+    }
+
+    // 2) Fallback – use per_answer_price from answers->user (as in screenshot)
+    if (Array.isArray(questionList)) {
+      for (const q of questionList) {
+        const answersArr = Array.isArray(q?.answers) ? q.answers : [];
+        for (const a of answersArr) {
+          console.log("a?.user",a?.user)
+          const au = a?.user ?? {}; 
+          
+          const rawVal =
+            au.per_answer_price ??
+            a.per_answer_price ??
+            a.answer_price ??
+            null;
+          const numVal = Number(rawVal);
+         
+          if (Number.isFinite(numVal)) {
+            return numVal;
+          }
+        }
+      }
+    }
+
+    return null;
+  };
 
   const fetchQuestions = async (pageNo = 1) => {
     try {
@@ -357,7 +569,21 @@ const QuestionAnswers = ({navigation}) => {
       if (pageNo === 1) setQuestionsLoading(false);
       else setQuestionsLoadingMore(false);
       const raw = res?.data?.data ?? [];
+      console.log("raw11111111",raw[1]?.answers[1])
       const lastPage = res?.data?.last_page ?? 1;
+      if (pageNo === 1) {
+        const rate = extractPaidAnswerRate(res?.data, raw);
+        console.log('QuestionAnswers paid answer rate (using per_answer_price):', {
+          paid_answer_rate: res?.data?.paid_answer_rate,
+          paidAnswerRate: res?.data?.paidAnswerRate,
+          answer_rate: res?.data?.answer_rate,
+          answerRate: res?.data?.answerRate,
+          derivedFromAnswers: rate,
+        });
+        setPaidAnswerRate(
+          Number.isFinite(Number(rate)) ? Number(rate) : 0,
+        );
+      }
       if (res?.status === 'RC200' && Array.isArray(raw)) {
         const mapped = raw.map(mapQuestionFromApi);
         setQuestionsLastPage(lastPage);
@@ -455,6 +681,10 @@ const QuestionAnswers = ({navigation}) => {
     }
   };
 
+  const parsedPaidAnswerRate = Number(paidAnswerRate);
+  const isPaidAnswerRateZero =
+    !Number.isFinite(parsedPaidAnswerRate) || parsedPaidAnswerRate <= 0;
+
   const renderQuestionItem = ({item}) => {
     const freeCount = item.freeAnswers ?? 0;
     const paidCount = item.paidAnswers ?? 0;
@@ -497,10 +727,19 @@ const QuestionAnswers = ({navigation}) => {
             <TouchableOpacity
               style={styles.writeAnswerBtn}
               onPress={() => {
+                console.log('Selected Question (QuestionAnswers):', {
+                  id: item.id,
+                  userId: item.userId,
+                  title: item.questionTitle,
+                  desc: item.questionDesc,
+                  freeAnswers: item.freeAnswers,
+                  paidAnswers: item.paidAnswers,
+                  answers: item.answers,
+                });
                 setSelectedQuestion({id: item.id, userId: item.userId});
                 setAnswerModalVisible(true);
               }}>
-              <Text style={styles.writeAnswerBtnText}>Write Answer</Text>
+              <Text style={styles.writeAnswerBtnText}>Answer this?</Text>
             </TouchableOpacity>
           </View>
 
@@ -790,6 +1029,13 @@ const QuestionAnswers = ({navigation}) => {
                   numberOfLines={8}
                   textAlignVertical="top"
                 />
+              ) : isPaidAnswerRateZero ? (
+                <View style={styles.paidAnswerInfoContainer}>
+                  <Text style={styles.paidAnswerInfoText}>
+                    First select your paid answer rate on the Time Slots / Rate
+                    page, then proceed.
+                  </Text>
+                </View>
               ) : (
                 <View style={styles.paidAnswerContainer}>
                   <TextInput
@@ -833,6 +1079,12 @@ const QuestionAnswers = ({navigation}) => {
                     });
                   }
                 } else {
+                  if (isPaidAnswerRateZero) {
+                    setAnswerModalVisible(false);
+                    setSelectedQuestion(null);
+                    navigation.navigate('AvailibilityTabIndex', {guide: true});
+                    return;
+                  }
                   if (paidAnswerOverview.trim() && paidAnswerText.trim()) {
                     handlePokeAnswer({
                       questionId: selectedQuestion.id,
@@ -1246,6 +1498,17 @@ const styles = StyleSheet.create({
   paidAnswerContainer: {
     flex: 1,
     justifyContent: 'space-between',
+  },
+  paidAnswerInfoContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  paidAnswerInfoText: {
+    fontSize: 14,
+    color: COLORS.gray,
+    textAlign: 'center',
   },
   modalTextArea: {
     borderWidth: 1,

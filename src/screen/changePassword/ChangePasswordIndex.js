@@ -105,7 +105,7 @@ const ChangePasswordIndex = ({navigation}) => {
           </ScrollView>
         </KeyboardAvoidingView>
       </View>
-      <View style={{position: 'absolute', bottom: 0}}>
+      <View>
         <BottomTab />
       </View>
       <Loader

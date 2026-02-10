@@ -1,13 +1,6 @@
 import {useNavigation} from '@react-navigation/native';
 import React from 'react';
-import {
-  Image,
-  Platform,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import {Image, Platform, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import ic_home from '../assets/images/ic_home.png';
 import {COLORS, SIZES} from '../util/Theme';
@@ -19,90 +12,78 @@ const BottomTab = ({onHomePress}) => {
   return (
     <View style={styles.shadowContainer}>
       <View style={styles.container}>
-        {/* Home Section */}
+        {/* Home */}
         <TouchableOpacity
           style={styles.itemContainer}
           onPress={() => {
             onHomePress?.();
             navigation.navigate('HomeTabIndex');
           }}>
-          <View style={styles.iconBox}>
-            <Image source={ic_home} style={styles.tabIcon} resizeMode="contain" />
-          </View>
+          <Image source={ic_home} style={styles.tabIcon} resizeMode="contain" />
           <Text style={styles.text} numberOfLines={1} ellipsizeMode="tail">
             Home
           </Text>
         </TouchableOpacity>
 
-        {/* Posts Section */}
+        {/* Feed */}
         <TouchableOpacity
           style={styles.itemContainer}
           onPress={() => {
             onHomePress?.();
-            navigation.navigate('ShowPost', {initialTab: 'post'});
+            navigation.navigate('ShowPost');
           }}>
-          <View style={styles.iconBox}>
-            <Icon name="file-text" size={26} color={COLORS.white} />
-          </View>
+          <Icon name="layers" size={24} color={COLORS.white} />
           <Text style={styles.text} numberOfLines={1} ellipsizeMode="tail">
+            Feed
+          </Text>
+        </TouchableOpacity>
+
+        {/* Post (+) - Center create button - LinkedIn style */}
+        <TouchableOpacity
+          style={styles.centerButton}
+          onPress={() => {
+            onHomePress?.();
+            navigation.navigate('AddQuestion', {startTab: 'post'});
+          }}
+          activeOpacity={0.8}>
+          <View style={styles.centerIconWrapper}>
+            <Icon name="plus" size={28} color={COLORS.primary} />
+          </View>
+          <Text style={styles.centerText} numberOfLines={1} ellipsizeMode="tail">
             Post
           </Text>
         </TouchableOpacity>
 
-        {/* Questions Section */}
+        {/* Questions */}
         <TouchableOpacity
           style={styles.itemContainer}
           onPress={() => {
             onHomePress?.();
             navigation.navigate('QuestionAnswers');
           }}>
-          <View style={styles.iconBox}>
-            <Icon name="message-circle" size={26} color={COLORS.white} />
-          </View>
+          <Icon name="message-circle" size={24} color={COLORS.white} />
           <Text style={styles.text} numberOfLines={1} ellipsizeMode="tail">
             Questions
           </Text>
         </TouchableOpacity>
 
-        {/* Add (create post) Section */}
+        {/* Notifications */}
         <TouchableOpacity
           style={styles.itemContainer}
-          onPress={() => {
-            onHomePress?.();
-            navigation.navigate('AddQuestion', {startTab: 'post'});
-          }}>
-          <View style={styles.iconBox}>
-            <Icon name="plus-circle" size={26} color={COLORS.white} />
-          </View>
-          <Text style={styles.text} numberOfLines={1} ellipsizeMode="tail">
-            Add
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.itemContainer]}
-          onPress={() => {
-            navigation.navigate('NotificationTabIndex');
-          }}>
-          <View style={styles.iconBox}>
-            <Image
-              source={require('../assets/images/notifications.png')}
-              style={[styles.tabIcon, {width: 26, height: 26}]}
-              resizeMode="contain"
-            />
-          </View>
-
-          <Text
-            style={[styles.text, {fontSize: 11,marginRight:1.5}]}
-            numberOfLines={2}
-            ellipsizeMode="tail">
+          onPress={() => navigation.navigate('NotificationTabIndex')}>
+          <Image
+            source={require('../assets/images/notifications.png')}
+            style={[styles.tabIcon, {width: 24, height: 24}]}
+            resizeMode="contain"
+          />
+          <Text style={[styles.text, {fontSize: 10}]} numberOfLines={2}>
             Notifications
           </Text>
         </TouchableOpacity>
       </View>
       <SafeAreaView
         edges={Platform.OS === 'ios' ? [] : ['bottom']}
-        style={{backgroundColor: COLORS.primary}}
+        style={styles.safeArea}
       />
     </View>
   );
@@ -116,53 +97,74 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: '100%',
     alignSelf: 'center',
-    //  borderRadius: 100,
-    shadowColor: COLORS.black,
     backgroundColor: 'transparent',
   },
 
   container: {
-    backgroundColor: COLORS.primary,
     flexDirection: 'row',
-    justifyContent: 'flex-start',
-    width: '100%',
-    paddingVertical: 8,
-    paddingHorizontal: 0,
-    paddingBottom: Platform.OS == 'ios' && 25,
-    shadowColor: COLORS.black,
-    shadowOffset: {
-      width: 0,
-      height: 10,
-    },
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.9,
-    shadowRadius: 10,
-    elevation: 4,
+    alignItems: 'flex-end',
+    backgroundColor: COLORS.primary,
+    paddingTop: 10,
+    paddingBottom: Platform.OS === 'ios' ? 8 : 12,
+    paddingHorizontal: 4,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: -2},
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
   },
 
   itemContainer: {
-    width: '20%', // 5 tabs => exact equal widths, no extra gaps
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     minWidth: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  iconBox: {
-    width: 28,
-    height: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 
   tabIcon: {
-    width: 28,
-    height: 28,
+    width: 24,
+    height: 24,
     tintColor: COLORS.white,
+    marginBottom: 2,
   },
+
   text: {
-    minWidth: 0,
-    paddingHorizontal: 4,
-    textAlign: 'center',
-    fontSize: 12,
+    fontSize: 11,
     color: COLORS.white,
+    textAlign: 'center',
+  },
+
+  /* Center Post (+) button - LinkedIn-style elevated */
+  centerButton: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: -20,
+    minWidth: 0,
+  },
+
+  centerIconWrapper: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 2,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+
+  centerText: {
+    fontSize: 11,
+    color: COLORS.white,
+    textAlign: 'center',
+  },
+
+  safeArea: {
+    backgroundColor: COLORS.primary,
   },
 });

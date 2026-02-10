@@ -74,6 +74,7 @@ const Index = ({navigation, route}) => {
           data?.paidAnswerRate ??
           data?.answer_rate ??
           data?.answerRate ??
+          data?.answer_rates ??
           '',
       );
       setOnboardingStatus(data.onboarding_status);
@@ -431,7 +432,7 @@ const Index = ({navigation, route}) => {
             ))}
         </View>
 
-        <View style={{position: 'absolute', bottom: 0}}>
+        <View>
           <BottomTab />
         </View>
 

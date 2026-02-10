@@ -537,7 +537,7 @@ const RequestGuidanceScreen = ({navigation}) => {
         </View>
       </Modal>
 
-      <View style={{position: 'absolute', bottom: 0}}>
+      <View>
         <BottomTab />
       </View>
       <Loader

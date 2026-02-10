@@ -61,39 +61,38 @@ Api.interceptors.response.use(
     //   return response?.data;
     // }
 
+    const skipToast = !!response?.config?.skipSuccessToast;
+
     if (response?.data?.status === 'RC200') {
       let arr = response.request.responseURL.split('/');
       arr = arr[arr.length - 1];
-      if (arr != API_UPDATE_FCB) {
-        //console.log('RC200', response?.data);
+      if (!skipToast && arr != API_UPDATE_FCB) {
         if (Platform.OS == 'android') {
           response?.data?.message &&
             store.dispatch(showToast(response?.data?.message));
         } else {
           response?.data?.message && simpleToast(response?.data?.message);
         }
-
-        //showToast(response?.data?.message);
       }
 
       return response?.data;
     }
 
     if (response.data.status === 'RC100') {
-      //showToast(response.data.message);
-      Platform.OS == 'android'
-        ? store.dispatch(showToast(response.data.message))
-        : simpleToast(response.data.message);
-
+      if (!skipToast) {
+        Platform.OS == 'android'
+          ? store.dispatch(showToast(response.data.message))
+          : simpleToast(response.data.message);
+      }
       return response?.data;
     }
 
     if (response.data.status === 'RC400') {
       store.dispatch(logout());
     } else {
-      response?.data?.message &&
+      if (!skipToast && response?.data?.message) {
         store.dispatch(showToast(response?.data?.message));
-      //showToast(response?.data?.message);
+      }
       return response?.data;
     }
   },

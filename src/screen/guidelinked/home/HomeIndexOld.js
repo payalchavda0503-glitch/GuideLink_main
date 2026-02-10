@@ -337,7 +337,7 @@ const HomeIndex = ({navigation}) => {
         </ScrollView>
       </View>
 
-      <View style={{position: 'absolute', bottom: 0}}>
+      <View>
         <BottomTab />
       </View>
       <Loader

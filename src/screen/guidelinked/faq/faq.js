@@ -64,7 +64,7 @@ const FAQScreen = ({navigation}) => {
           />
         )}
 
-        <View style={{position: 'absolute', bottom: 0}}>
+        <View>
           <BottomTab />
         </View>
       </SafeAreaView>

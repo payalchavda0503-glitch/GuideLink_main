@@ -27,6 +27,11 @@ const Contactndex = ({navigation}) => {
   const [countryCode, setCountryCode] = useState('+91');
   const [region, setRegion] = useState('US');
   const dispatch = useDispatch();
+
+  const safeDefaultCode =
+    typeof region === 'string' && region.length === 2
+      ? region.toUpperCase()
+      : 'US';
   const emailRef = useRef();
 
   const [isContact, setIsContact] = useState(false);
@@ -45,15 +50,19 @@ const Contactndex = ({navigation}) => {
       if (response.status == 'RC200') {
         let result = response.data;
 
-        setName(result?.fullname);
-        setEmail(result?.email);
-        setPhone(result?.phone_number);
-        setRegion(result?.country_region);
-        setCountryCode(result.country_code);
+        setName(result?.fullname ?? '');
+        setEmail(result?.email ?? '');
+        setPhone(result?.phone_number ?? '');
+        if (result?.country_region && typeof result.country_region === 'string' && result.country_region.length === 2) {
+          setRegion(result.country_region.toUpperCase());
+        }
+        if (result?.country_code != null && result?.country_code !== 'null') {
+          setCountryCode(String(result.country_code));
+        }
         setLoaderVisible(false);
       }
     } catch (error) {
-      log(error);
+      console.warn(error);
       setLoaderVisible(false);
     }
   };
@@ -168,7 +177,7 @@ const Contactndex = ({navigation}) => {
               <Text style={styles.label}>Phone</Text>
               <PhoneInput
                 value={phone}
-                defaultCode={region}
+                defaultCode={safeDefaultCode}
                 disableArrowIcon={false}
                 textSearchProps={{placeholder: 'Enter country name'}}
                 placeholder="Phone Number"
@@ -177,8 +186,10 @@ const Contactndex = ({navigation}) => {
                   setPhone(text);
                 }}
                 onChangeCountry={txt => {
-                  setRegion(txt.cca2);
-                  setCountryCode(txt.callingCode[0]);
+                  if (txt?.cca2) setRegion(txt.cca2);
+                  if (Array.isArray(txt?.callingCode) && txt.callingCode.length > 0) {
+                    setCountryCode(String(txt.callingCode[0] ?? ''));
+                  }
                 }}
                 textInputStyle={styles.phoneTextInputStyle}
                 containerStyle={[styles.phoneContainerStyle]}
@@ -258,7 +269,7 @@ const Contactndex = ({navigation}) => {
         />
       </View>
 
-      <View style={{position: 'absolute', bottom: 0}}>
+      <View>
         <BottomTab />
       </View>
     </>

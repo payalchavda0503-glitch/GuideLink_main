@@ -390,7 +390,7 @@ const EmailVerifyIndex = ({navigation, route}) => {
         {/* </KeyboardAvoidingView> */}
       </View>
 
-      <View style={{position: 'absolute', bottom: 0}}>
+      <View>
         <BottomTab />
       </View>
 

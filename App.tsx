@@ -5,7 +5,7 @@ import {NavigationContainer} from '@react-navigation/native';
 import {useStripe} from '@stripe/stripe-react-native';
 import React, {useCallback, useEffect} from 'react';
 import {Alert, Linking, LogBox, Platform, StyleSheet} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 import SplashScreen from 'react-native-splash-screen';
 import {ToastProvider} from 'react-native-toast-notifications';
 import {Provider} from 'react-redux';
@@ -207,14 +207,16 @@ const AppNV = () => {
     <ToastProvider animationType="slide-in" animationDuration={100}>
       <Provider store={store}>
         <PersistGate persistor={persistor}>
-          <SafeAreaView
-            style={DefaultStyle.flexView}
-            edges={Platform.OS === 'ios' ? [] : ['top']}>
-            <NetworkError>
-              <Authenication />
-              <CustomToast />
-            </NetworkError>
-          </SafeAreaView>
+          <SafeAreaProvider>
+            <SafeAreaView
+              style={DefaultStyle.flexView}
+              edges={Platform.OS === 'ios' ? [] : ['top']}>
+              <NetworkError>
+                <Authenication />
+                <CustomToast />
+              </NetworkError>
+            </SafeAreaView>
+          </SafeAreaProvider>
         </PersistGate>
       </Provider>
     </ToastProvider>

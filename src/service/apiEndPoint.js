@@ -72,14 +72,14 @@ export const API_GET_STRIPE_PUB_KEY = 'stripe/publishable-key';
 export const API_GET_STRIPE_CARD_SETUP_KEY = 'stripe/card/setup/keys';
 export const API_GET_STRIPE_PAYMENT = 'stripe/payment';
 export const API_STRIPE_ANSWER_PAYMENT = 'stripe/answer-payment';
-export const API_SAVE_ANSWER_PAID_HISTORY =
-  'users/guidance/save_answer_paid_history';
+export const API_SAVE_ANSWER_PAID_HISTORY = 'guidance/save_answer_paid_history';
 
 export const API_GET_VIDEOS_LIST = 'how-to/videos/list';
 
 export const API_GET_GUIDANCE_REQUEST = 'guidance/get_request';
 export const API_POST_GUIDANCE_REQUEST = 'guidance/request';
 export const API_GET_GUIDANCE_DATA = 'guidance/get';
+export const API_GET_GUIDANCE_ANSWERS = 'guidance/get-answers';
 export const API_GET_GUIDANCE_MY_QUESTIONS = 'guidance/get_my_question';
 export const API_GET_GUIDANCE_MY_ANSWER_QUESTION = 'guidance/get_my_answer_question';
 export const API_DELETE_GUIDANCE_REQUEST = 'guidance/delete';

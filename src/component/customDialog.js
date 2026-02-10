@@ -140,14 +140,18 @@ export const CustomApptDialogCancel = ({visible, onClose, onConfirm}) => {
 
 export const CustomDialogVerifyEmail = ({visible, onClose, emailList}) => {
   const hideEmailChars = email => {
-    // const [name, domain] = email.split('@');
-    // const hiddName = name.replace(/./g, '.');
-    // return `${hiddName}@${domain}`;
+    if (!email || typeof email !== 'string') {
+      return '';
+    }
 
-    const isIndex = email.indexOf('@'); // Find the index of '@', postion return
-    const hiddenName = email.slice(0, isIndex).replace(/./g, ''); // Replace characters before '@' with dots
-    // console.log("LIKE @nexcess.com : -",email.slice(isIndex));
-    return '*****' + hiddenName + email.slice(isIndex); // Return hidden email
+    const atIndex = email.indexOf('@');
+    if (atIndex <= 0) {
+      // No '@' found or it's the first char – just return as-is
+      return email;
+    }
+
+    const hiddenName = email.slice(0, atIndex).replace(/./g, '');
+    return '*****' + hiddenName + email.slice(atIndex);
   };
   return (
     <Modal

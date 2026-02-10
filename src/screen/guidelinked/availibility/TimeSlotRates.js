@@ -162,7 +162,7 @@ const TimeSlotRates = ({
                 ]}
                 keyboardType="decimal-pad"
                 placeholder="Rate"
-                maxLength={2}
+                maxLength={5}
                 value={currentRates}
                 // onChangeText={v => setCurrentRates(v)}
                 onChangeText={v => {

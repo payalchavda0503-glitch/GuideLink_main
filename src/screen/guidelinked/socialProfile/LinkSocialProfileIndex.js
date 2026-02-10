@@ -114,19 +114,21 @@ const LinkSocialProfileIndex = ({navigation}) => {
         backgroundColor={COLORS.primary}
         barStyle="light-content"
       />
-      <AppHeader
-        background={COLORS.primary}
-        iconType={'Feather'}
-        iconName={'menu'}
-        iconColor={COLORS.white}
-        navigation={navigation}
-        tittle={'Link Social Profiles'}
-        titleColor={COLORS.white}
-      />
-      <View>
-        <ScrollView
-          automaticallyAdjustKeyboardInsets={true}
-          showsVerticalScrollIndicator={false}>
+      <View style={{flex: 1, backgroundColor: COLORS.white}}>
+        <AppHeader
+          background={COLORS.primary}
+          iconType={'Feather'}
+          iconName={'menu'}
+          iconColor={COLORS.white}
+          navigation={navigation}
+          tittle={'Link Social Profiles'}
+          titleColor={COLORS.white}
+        />
+        <View style={{flex: 1}}>
+          <ScrollView
+            automaticallyAdjustKeyboardInsets={true}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{paddingBottom: 24}}>
           <LoaderV2 loaderVisible={loaderVisible}>
             <View style={{paddingHorizontal: 20, marginVertical: 40}}>
               <View style={{alignContent: 'center'}}>
@@ -289,8 +291,7 @@ const LinkSocialProfileIndex = ({navigation}) => {
             </View>
           </LoaderV2>
         </ScrollView>
-      </View>
-      <View style={{position: 'absolute', bottom: 0}}>
+        </View>
         <BottomTab />
       </View>
     </>

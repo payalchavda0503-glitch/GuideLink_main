@@ -250,7 +250,7 @@ const ExpertIndex = ({navigation}) => {
         </View>
       </View>
 
-      <View style={{position: 'absolute', bottom: 0}}>
+      <View>
         <BottomTab />
       </View>
       <Loader

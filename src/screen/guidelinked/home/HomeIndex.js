@@ -84,7 +84,7 @@ const HomeIndex = ({navigation}) => {
   const fetchCategories = useCallback(async () => {
     try {
       setCategoriesLoading(true);
-      const res = await Api.get(API_CATEGORY_LIST);
+      const res = await Api.get(`${API_CATEGORY_LIST}?show=all`);
       if (res?.status === 'RC200' && Array.isArray(res?.data)) {
         const apiList = res.data.map(item => {
           const label = item.name || item.title || item.category_name || String(item.id);
@@ -138,8 +138,10 @@ const HomeIndex = ({navigation}) => {
       if (currentPage === 1) setLoaderVisible(true);
       if (currentPage > 1) setLoader(true);
 
+      const guideCategory =
+        expertType === 'all_guides' ? 'all-guides' : String(expertType || '');
       const response = await Api.get(
-        `${API_LATEST_USER}?search=${search}&page=${currentPage}&expert_type=${expertType}`,
+        `${API_LATEST_USER}?page=${currentPage}&search=${encodeURIComponent(search || '')}&guide_category=${encodeURIComponent(guideCategory)}`,
       );
 
       // After API responds: check if this call is still the latest

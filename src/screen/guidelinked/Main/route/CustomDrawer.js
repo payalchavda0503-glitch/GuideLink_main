@@ -360,34 +360,17 @@ const CustomDrawer = () => {
 
   const onShare = async () => {
     const message =
-      'Hey, Download this app and create an account! You can make money by sharing your experiences/ expertise with someone and vice versa.\n\nInstagram: https://shorturl.at/Ke5ED \n\nApple: https://shorturl.at/a5UmR \nAndroid: https://shorturl.at/xSRjQ';
-    const imageUrl = 'https://guidelinked.com/logo.jpg';
-    const localPath = `${RNFS.CachesDirectoryPath}/app_invite_logo.jpg`;
+      'Hey, download the GuideLinked app and create an account! You can make money by sharing your experiences / expertise with someone and vice versa.\n\nWebsite: https://guidelinked.com\n\nAndroid: https://play.google.com/store/apps/details?id=com.guidelinked\nApple: https://apps.apple.com';
 
     try {
-      let base64Data = base64Ref.current;
-
-      if (!base64Data) {
-        // Download image if not cached
-        await RNFS.downloadFile({
-          fromUrl: imageUrl,
-          toFile: localPath,
-        }).promise;
-
-        // Convert image to base64
-        base64Data = await RNFS.readFile(localPath, 'base64');
-        base64Ref.current = base64Data; // cache it for future shares
-      }
-
       const shareOptions = {
         title: 'Invite Friends',
-        message: message,
-        url: `data:image/jpeg;base64,${base64Data}`,
-        type: 'image/jpeg',
+        message,
       };
 
       await Share.open(shareOptions);
     } catch (err) {
+      // User cancelled or share failed – just log, don’t crash
       console.log('Sharing failed:', err);
     }
   };
