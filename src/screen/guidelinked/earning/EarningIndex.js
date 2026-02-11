@@ -68,13 +68,13 @@ const EarningIndex = ({navigation}) => {
         />
         <View style={{flex: 1}}>
           {hasConnectAccount && (
-              <BalanceCard
-                availableBalance={currentBalance}
-                pendingBalance={pendingBalance}
-              />
-            )}
+            <BalanceCard
+              availableBalance={currentBalance}
+              pendingBalance={pendingBalance}
+            />
+          )}
         </View>
-        <View style={{position:'absolute',bottom:0}}>
+        <View>
           <BottomTab />
         </View>
         <Loader

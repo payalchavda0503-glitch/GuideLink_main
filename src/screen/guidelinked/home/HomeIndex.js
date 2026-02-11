@@ -97,11 +97,11 @@ const HomeIndex = ({navigation}) => {
             image: img ? getCategoryImageUrl(img) : null,
           };
         });
-        setItems([{label: 'All Experts', value: 'all_guides', image: null}, ...apiList]);
+        setItems([{label: 'All Guides', value: 'all_guides', image: null}, ...apiList]);
       }
     } catch (e) {
       console.warn('Home categories fetch failed, using defaults:', e);
-      setItems([{label: 'All Experts', value: 'all_guides', image: null}]);
+      setItems([{label: 'All Guides', value: 'all_guides', image: null}]);
     } finally {
       setCategoriesLoading(false);
     }
