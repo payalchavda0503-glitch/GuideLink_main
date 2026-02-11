@@ -12,7 +12,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Dimensions,
-  Animated,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import BottomTab from '../../../component/BottomTab';
@@ -72,26 +71,6 @@ const ShowPost = ({navigation}) => {
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [imageModalImages, setImageModalImages] = useState([]);
   const [imageModalIndex, setImageModalIndex] = useState(0);
-
-  // Aura button animation – shared, more visible pulse + wobble
-  const auraPulse = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(auraPulse, {
-          toValue: 1,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(auraPulse, {
-          toValue: 0,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-      ]),
-    ).start();
-  }, [auraPulse]);
 
   const openImageModal = (images, index = 0) => {
     const list = Array.isArray(images) ? images : [];
@@ -893,34 +872,16 @@ const ShowPost = ({navigation}) => {
             </Text>
           </TouchableOpacity>
           <View style={styles.engagementItem}>
-            <Animated.View
-              style={{
-                transform: [
-                  {
-                    scale: auraPulse.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [1, 1.25], // bigger pop
-                    }),
-                  },
-                  {
-                    rotate: auraPulse.interpolate({
-                      inputRange: [0, 0.5, 1],
-                      outputRange: ['-6deg', '0deg', '6deg'], // subtle wobble
-                    }),
-                  },
-                ],
-              }}>
-              <TouchableOpacity
-                style={styles.engagementLikeIconBtn}
-                onPress={() => handleAura(item.id, item.isAuraGiven)}
-                disabled={auraPostId === item.id}>
-                <Image
-                  source={require('../../../assets/images/image.png')}
-                  style={styles.auraIcon}
-                  resizeMode="contain"
-                />
-              </TouchableOpacity>
-            </Animated.View>
+            <TouchableOpacity
+              style={styles.engagementLikeIconBtn}
+              onPress={() => handleAura(item.id, item.isAuraGiven)}
+              disabled={auraPostId === item.id}>
+              <Image
+                source={require('../../../assets/images/image.png')}
+                style={styles.auraIcon}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
             <TouchableOpacity
               style={styles.engagementLikesTextBtn}
               onPress={() => openAuraModal(item.id)}

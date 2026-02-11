@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback, useRef} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,6 @@ import {
   Platform,
   TextInput,
   KeyboardAvoidingView,
-  Animated,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import {useFocusEffect} from '@react-navigation/native';
@@ -101,26 +100,6 @@ const MyTimeline = ({navigation}) => {
   const [unlockedPaidAnswerKeys, setUnlockedPaidAnswerKeys] = useState({});
   const [answersExpandedByQuestion, setAnswersExpandedByQuestion] = useState({});
   const [paidAnswerRate, setPaidAnswerRate] = useState(null);
-
-  // Shared aura animation (same behaviour as ShowPost)
-  const auraPulse = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(auraPulse, {
-          toValue: 1,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(auraPulse, {
-          toValue: 0,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-      ]),
-    ).start();
-  }, [auraPulse]);
 
   const isAnswersExpanded = (questionId) =>
     answersExpandedByQuestion[questionId] === true;
@@ -1275,34 +1254,16 @@ const MyTimeline = ({navigation}) => {
             <Text style={styles.engagementText}>{item.comments} Comments</Text>
           </TouchableOpacity>
           <View style={styles.engagementItem}>
-            <Animated.View
-              style={{
-                transform: [
-                  {
-                    scale: auraPulse.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [1, 1.25],
-                    }),
-                  },
-                  {
-                    rotate: auraPulse.interpolate({
-                      inputRange: [0, 0.5, 1],
-                      outputRange: ['-6deg', '0deg', '6deg'],
-                    }),
-                  },
-                ],
-              }}>
-              <TouchableOpacity
-                style={styles.engagementLikeIconBtn}
-                onPress={() => handleAura(item.id, item.isAuraGiven)}
-                disabled={auraPostId === item.id}>
-                <Image
-                  source={require('../../../assets/images/image.png')}
-                  style={styles.auraIcon}
-                  resizeMode="contain"
-                />
-              </TouchableOpacity>
-            </Animated.View>
+            <TouchableOpacity
+              style={styles.engagementLikeIconBtn}
+              onPress={() => handleAura(item.id, item.isAuraGiven)}
+              disabled={auraPostId === item.id}>
+              <Image
+                source={require('../../../assets/images/image.png')}
+                style={styles.auraIcon}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
             <TouchableOpacity
               style={styles.engagementLikesTextBtn}
               onPress={() => openAuraModal(item.id)}
