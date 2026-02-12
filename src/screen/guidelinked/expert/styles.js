@@ -11,7 +11,29 @@ export const styles = StyleSheet.create({
     height: SIZES.height * 1,
     paddingBottom: 80,
   },
-
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    marginTop: 4,
+    marginRight:70
+  },
+  categoryText: {
+    fontSize: 12,
+    color: COLORS.black,
+    marginRight: 8,
+  },
+  expertTypePill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    backgroundColor: COLORS.primary,
+  },
+  expertTypePillText: {
+    fontSize: 10,
+    color: COLORS.white,
+    fontWeight: '600',
+  },
   //expert deatil  style
 
   ic_back: {

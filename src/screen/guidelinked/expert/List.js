@@ -14,6 +14,16 @@ const List = ({
   onVerifiedEmailClick,
   searchText = '',
 }) => {
+  const primaryCategoryTitle =
+    Array.isArray(item?.categories) && item.categories.length > 0
+      ? item.categories[0]?.title || item.categories[0]?.name || null
+      : null;
+
+  const expertTypeLabel =
+    Array.isArray(item?.expert_type) && item.expert_type.length > 0
+      ? String(item.expert_type[0])
+      : null;
+
   const renderHighlightedText = (text, searchText, textStyle = {}) => {
     if (!text || text === 'null') {
       return <Text style={[DefaultStyle.text, {color: COLORS.black}]}>-</Text>;
@@ -96,6 +106,42 @@ const List = ({
               </Pressable>
             )}
           </View>
+
+          {(primaryCategoryTitle || expertTypeLabel) && (
+            <View
+              style={[
+                DefaultStyle.flexDirection,
+                {alignItems: 'center', flexWrap: 'wrap', marginTop: 5,marginBottom:5},
+              ]}>
+              {primaryCategoryTitle && (
+                <Text
+                  style={[
+                    DefaultStyle.txtgray12,
+                    {color: COLORS.black, marginRight: 8},
+                  ]}>
+                  {primaryCategoryTitle}
+                </Text>
+              )}
+              {expertTypeLabel && (
+                <View
+                  style={{
+                    paddingHorizontal: 8,
+                    paddingVertical: 3,
+                    borderRadius: 10,
+                    backgroundColor: COLORS.primary,
+                  }}>
+                  <Text
+                    style={{
+                      fontSize: 10,
+                      color: COLORS.white,
+                      fontWeight: '600',
+                    }}>
+                    {expertTypeLabel}
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
 
           {item.avg_rating > 0 && (
             <View style={DefaultStyle.flexDirection}>

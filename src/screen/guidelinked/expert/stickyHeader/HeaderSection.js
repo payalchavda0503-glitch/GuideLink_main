@@ -26,7 +26,19 @@ const HeaderSection = ({dataList, onScrollDown, onBookAppointment}) => {
   const EmailVerifyDialog = () => {
     setEmailDialog(!isEmailDialog);
   };
+// Example – keep your own state names
+const [expert, setExpert] = useState(dataList);
 
+// ⬇️ Add this right after the state above
+const primaryCategoryTitle =
+  Array.isArray(expert?.categories) && expert.categories.length > 0
+    ? expert.categories[0].title
+    : null;
+
+const expertTypeLabel =
+  Array.isArray(expert?.expert_type) && expert.expert_type.length > 0
+    ? expert.expert_type[0]
+    : null;
   const Divider = () => {
     return (
       <View
@@ -112,12 +124,23 @@ const HeaderSection = ({dataList, onScrollDown, onBookAppointment}) => {
           style={{
             flexDirection: 'row',
             alignItems: 'center',
-            alignSelf: 'flex-end',
+            
           }}>
+             <View style={styles.metaRow}>
+      {!!primaryCategoryTitle && (
+        <Text style={styles.categoryText}>{primaryCategoryTitle}</Text>
+      )}
+
+      {!!expertTypeLabel && (
+        <View style={styles.expertTypePill}>
+          <Text style={styles.expertTypePillText}>{expertTypeLabel}</Text>
+        </View>
+      )}
+    </View>
           <Text style={styles.dolar}>
             ${dataList.slot_price === '' ? '0' : dataList.slot_price}
           </Text>
-          <Text style={[DefaultStyle.txtblack12, {marginStart: 5}]}>
+          <Text style={[DefaultStyle.txtblack12, {marginStart: 3}]}>
             per 25 mins
           </Text>
         </View>
@@ -277,7 +300,7 @@ const HeaderSection = ({dataList, onScrollDown, onBookAppointment}) => {
           </View>
         </View>
       </View>
-
+    
       <View style={{marginHorizontal: 15}}>
         <Text style={styles.desc}>
           {dataList.introduction == 'null' || !dataList.introduction

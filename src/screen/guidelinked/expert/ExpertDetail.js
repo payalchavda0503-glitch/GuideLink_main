@@ -60,6 +60,10 @@ const ExpertDetail = ({navigation, route}) => {
 
       if (response.status == 'RC200') {
         setDetails(response.data);
+        console.log('Expert detail API (categories):', {
+          categories: response.data.categories,
+          raw: response.data,
+        });
       }
 
       setLoaderVisible(false);
