@@ -337,7 +337,7 @@ const HomeIndex = ({navigation}) => {
                 const isAllGuides = filterItem.value === 'all_guides';
                 const showImage = imageUri || isAllGuides;
                 const imageSource = isAllGuides
-                  ? require('../../../assets/images/ic_logo.png')
+                  ? require('../../../assets/images/gudiecategory.jpg')
                   : {uri: imageUri};
                 return (
                   <TouchableOpacity
