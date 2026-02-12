@@ -13,15 +13,32 @@ export const styles = StyleSheet.create({
   },
   metaRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     flexWrap: 'wrap',
+    flexShrink: 1,
+    maxWidth: '60%',
     marginTop: 4,
-    marginRight:70
+    marginRight: 0,
   },
   categoryText: {
     fontSize: 12,
     color: COLORS.black,
     marginRight: 8,
+  },
+  categoryPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    backgroundColor: COLORS.primary,
+    borderWidth: 0,
+    borderColor: 'transparent',
+    marginRight: 8,
+    marginTop:4
+  },
+  categoryPillText: {
+    fontSize: 10,
+    color: COLORS.white,
+    fontWeight: '500',
   },
   expertTypePill: {
     paddingHorizontal: 8,
@@ -33,6 +50,16 @@ export const styles = StyleSheet.create({
     fontSize: 10,
     color: COLORS.white,
     fontWeight: '600',
+  },
+  auraText: {
+    fontSize: 12,
+    color: COLORS.black,
+    fontWeight: '500',
+    marginLeft: 4,
+  },
+  auraIcon: {
+    width: 16,
+    height: 16,
   },
   //expert deatil  style
 

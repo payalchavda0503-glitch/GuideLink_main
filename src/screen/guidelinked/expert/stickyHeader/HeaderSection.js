@@ -8,6 +8,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Image,
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import LinearGradient from 'react-native-linear-gradient';
@@ -26,19 +27,15 @@ const HeaderSection = ({dataList, onScrollDown, onBookAppointment}) => {
   const EmailVerifyDialog = () => {
     setEmailDialog(!isEmailDialog);
   };
-// Example – keep your own state names
-const [expert, setExpert] = useState(dataList);
 
-// ⬇️ Add this right after the state above
-const primaryCategoryTitle =
-  Array.isArray(expert?.categories) && expert.categories.length > 0
-    ? expert.categories[0].title
-    : null;
+  const categories = Array.isArray(dataList?.categories)
+    ? dataList.categories
+    : [];
 
-const expertTypeLabel =
-  Array.isArray(expert?.expert_type) && expert.expert_type.length > 0
-    ? expert.expert_type[0]
-    : null;
+  const primaryCategoryTitle =
+    categories.length > 0
+      ? categories[0]?.title || categories[0]?.name || null
+      : null;
   const Divider = () => {
     return (
       <View
@@ -110,66 +107,19 @@ const expertTypeLabel =
               />
             </View>
           )}
-          <Text style={[styles.name, {fontSize: 18, flexShrink: 1}]}>
-            {dataList.fullname == 'null' || !dataList.fullname
-              ? '-'
-              : dataList.fullname}
-            <Text style={[styles.name, {fontSize: 11, marginLeft: 5}]}>
-              {` - ${dataList.country_name}`}
+          <View style={{flexDirection: 'row', alignItems: 'center', flexShrink: 1}}>
+            <Text style={[styles.name, {fontSize: 18}]}>
+              {dataList.fullname == 'null' || !dataList.fullname
+                ? '-'
+                : dataList.fullname}
             </Text>
-          </Text>
-        </View>
-
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            
-          }}>
-             <View style={styles.metaRow}>
-      {!!primaryCategoryTitle && (
-        <Text style={styles.categoryText}>{primaryCategoryTitle}</Text>
-      )}
-
-      {!!expertTypeLabel && (
-        <View style={styles.expertTypePill}>
-          <Text style={styles.expertTypePillText}>{expertTypeLabel}</Text>
-        </View>
-      )}
-    </View>
-          <Text style={styles.dolar}>
-            ${dataList.slot_price === '' ? '0' : dataList.slot_price}
-          </Text>
-          <Text style={[DefaultStyle.txtblack12, {marginStart: 3}]}>
-            per 25 mins
-          </Text>
-        </View>
-
-        {/* 2nd row: Rating (left), Social icons (right) */}
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginTop: 8,
-          }}>
-          {/* Left: Rating */}
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <TouchableOpacity
-              style={[DefaultStyle.flexDirection, {alignItems: 'center'}]}
-              onPress={onScrollDown}>
-              <Rating initialRating={dataList.avg_rating} />
-              <Text style={styles.counting}>
-                {'(' + dataList.total_rating_users + ')'}
-              </Text>
-            </TouchableOpacity>
             {dataList.is_education_email_verified == 1 && (
               <Pressable
                 onPress={() => {
                   setEmailList(dataList.education_email_verified_hidden);
                   EmailVerifyDialog();
                 }}
-                style={{marginRight: 8}}>
+                style={{marginLeft: 6}}>
                 <AppIcons
                   type={'MaterialCommunityIcons'}
                   name={'check-decagram'}
@@ -178,7 +128,91 @@ const expertTypeLabel =
                 />
               </Pressable>
             )}
+            <Text style={[styles.name, {fontSize: 11, marginLeft: 5}]}>
+              {` - ${dataList.country_name}`}
+            </Text>
           </View>
+        </View>
+
+        <View style={{marginTop: 4}}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}>
+            <View style={styles.metaRow}>
+              {categories.map(cat => {
+                const label =
+                  cat?.title || cat?.name || cat?.category_name || '';
+                if (!label) return null;
+                const key = String(cat.id ?? cat.slug ?? label);
+                return (
+                  <View key={key} style={styles.categoryPill}>
+                    <Text style={styles.categoryPillText}>{label}</Text>
+                  </View>
+                );
+              })}
+            </View>
+
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+              }}>
+              <Text style={styles.dolar}>
+                ${dataList.slot_price === '' ? '0' : dataList.slot_price}
+              </Text>
+              <Text style={[DefaultStyle.txtblack12, {marginStart: 3}]}>
+                per 25 mins
+              </Text>
+            </View>
+          </View>
+
+          {Number(dataList?.total_aura) > 0 && (
+            <View
+              style={{
+                marginTop: 4,
+                alignItems: 'flex-end',
+              }}>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                <Image
+                  source={require('../../../../assets/images/image.png')}
+                  style={styles.auraIcon}
+                  resizeMode="contain"
+                />
+                <Text style={styles.auraText}>
+                  (
+                  {dataList.total_aura}{' '}
+                  {Number(dataList.total_aura) === 1 ? 'Aura' : 'Auras'}
+                  )
+                </Text>
+              </View>
+            </View>
+          )}
+        </View>
+
+        {/* 2nd row: Rating (left, only if reviews > 0), Social icons (right) */}
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginTop: 8,
+          }}>
+          {/* Left: Rating – only show when there is at least 1 review */}
+          {Number(dataList?.total_rating_users) > 0 && (
+            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <TouchableOpacity
+                style={[DefaultStyle.flexDirection, {alignItems: 'center'}]}
+                onPress={onScrollDown}>
+                <Rating initialRating={dataList.avg_rating} />
+                <Text style={styles.counting}>
+                  {'(' + dataList.total_rating_users + ')'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* Right: Social + Verified icon row */}
           <View style={{flexDirection: 'row', alignItems: 'center'}}>

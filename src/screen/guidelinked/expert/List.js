@@ -14,15 +14,19 @@ const List = ({
   onVerifiedEmailClick,
   searchText = '',
 }) => {
-  const primaryCategoryTitle =
-    Array.isArray(item?.categories) && item.categories.length > 0
-      ? item.categories[0]?.title || item.categories[0]?.name || null
+  const categories = Array.isArray(item?.categories)
+    ? item.categories
+    : [];
+
+  const primaryCategoryTitleRaw =
+    categories.length > 0
+      ? categories[0]?.title || categories[0]?.name || null
       : null;
 
-  const expertTypeLabel =
-    Array.isArray(item?.expert_type) && item.expert_type.length > 0
-      ? String(item.expert_type[0])
-      : null;
+  const primaryCategoryTitle =
+    categories.length <= 1 || !primaryCategoryTitleRaw
+      ? primaryCategoryTitleRaw
+      : `${primaryCategoryTitleRaw} +${categories.length - 1}`;
 
   const renderHighlightedText = (text, searchText, textStyle = {}) => {
     if (!text || text === 'null') {
@@ -107,39 +111,15 @@ const List = ({
             )}
           </View>
 
-          {(primaryCategoryTitle || expertTypeLabel) && (
+          {primaryCategoryTitle && (
             <View
               style={[
                 DefaultStyle.flexDirection,
-                {alignItems: 'center', flexWrap: 'wrap', marginTop: 5,marginBottom:5},
+                {alignItems: 'center', flexWrap: 'wrap', marginTop: 5, marginBottom: 5},
               ]}>
-              {primaryCategoryTitle && (
-                <Text
-                  style={[
-                    DefaultStyle.txtgray12,
-                    {color: COLORS.black, marginRight: 8},
-                  ]}>
-                  {primaryCategoryTitle}
-                </Text>
-              )}
-              {expertTypeLabel && (
-                <View
-                  style={{
-                    paddingHorizontal: 8,
-                    paddingVertical: 3,
-                    borderRadius: 10,
-                    backgroundColor: COLORS.primary,
-                  }}>
-                  <Text
-                    style={{
-                      fontSize: 10,
-                      color: COLORS.white,
-                      fontWeight: '600',
-                    }}>
-                    {expertTypeLabel}
-                  </Text>
-                </View>
-              )}
+              <View style={styles.categoryPill}>
+                <Text style={styles.categoryPillText}>{primaryCategoryTitle}</Text>
+              </View>
             </View>
           )}
 
