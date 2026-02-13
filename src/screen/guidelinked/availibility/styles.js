@@ -203,8 +203,8 @@ export const styles = StyleSheet.create({
   availabilityTimeContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: 10,
-    paddingBottom: 10,
+    paddingHorizontal: 4,
+    paddingBottom: 4,
   },
   availabilityTimeButton: {
     borderRadius: 8,
@@ -219,6 +219,29 @@ export const styles = StyleSheet.create({
   availabilityTimeText: {
     fontSize: 14,
     color: COLORS.black,
+  },
+  // Slot: outline style, no fill, primary border, 2 per row, full text visible
+  slotTube: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '48%',
+    backgroundColor:'#E6F0FA',
+    borderWidth: 0.5,
+    borderColor: COLORS.primary,
+    paddingVertical: 4,
+    paddingHorizontal: 6,
+    borderRadius: 8,
+    marginRight: '2%',
+    marginBottom: 8,
+    minHeight: 36,
+  },
+  slotTubeText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: COLORS.black,
+    flex: 1,
+    flexShrink: 1,
   },
   availabilitySlotsMessage: {
     fontSize: 13,

@@ -1,17 +1,19 @@
 import {useNavigation} from '@react-navigation/native';
 import React from 'react';
 import {Image, Platform, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import ic_home from '../assets/images/ic_home.png';
+import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import {COLORS, SIZES} from '../util/Theme';
 import Icon from 'react-native-vector-icons/Feather';
+import IconFa5 from 'react-native-vector-icons/FontAwesome5';
 
 const BottomTab = ({onHomePress}) => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
+  const horizontalPadding = Math.max(16, insets.left, insets.right);
 
   return (
     <View style={styles.shadowContainer}>
-      <View style={styles.container}>
+      <View style={[styles.container, {paddingHorizontal: horizontalPadding}]}>
         {/* Home */}
         <TouchableOpacity
           style={styles.itemContainer}
@@ -19,22 +21,22 @@ const BottomTab = ({onHomePress}) => {
             onHomePress?.();
             navigation.navigate('HomeTabIndex');
           }}>
-          <Image source={ic_home} style={styles.tabIcon} resizeMode="contain" />
+          <Icon name="home" size={24} color={COLORS.white} />
           <Text style={styles.text} numberOfLines={1} ellipsizeMode="tail">
             Home
           </Text>
         </TouchableOpacity>
 
-        {/* Feed */}
+        {/* Questions */}
         <TouchableOpacity
           style={styles.itemContainer}
           onPress={() => {
             onHomePress?.();
-            navigation.navigate('ShowPost');
+            navigation.navigate('QuestionAnswers');
           }}>
-          <Icon name="layers" size={24} color={COLORS.white} />
+          <IconFa5 name="question-circle" size={24} color={COLORS.white} />
           <Text style={styles.text} numberOfLines={1} ellipsizeMode="tail">
-            Feed
+            Questions
           </Text>
         </TouchableOpacity>
 
@@ -54,16 +56,16 @@ const BottomTab = ({onHomePress}) => {
           </Text>
         </TouchableOpacity>
 
-        {/* Questions */}
+        {/* Feed */}
         <TouchableOpacity
           style={styles.itemContainer}
           onPress={() => {
             onHomePress?.();
-            navigation.navigate('QuestionAnswers');
+            navigation.navigate('ShowPost');
           }}>
-          <Icon name="message-circle" size={24} color={COLORS.white} />
+          <Icon name="layers" size={24} color={COLORS.white} />
           <Text style={styles.text} numberOfLines={1} ellipsizeMode="tail">
-            Questions
+            Feed
           </Text>
         </TouchableOpacity>
 
@@ -76,7 +78,7 @@ const BottomTab = ({onHomePress}) => {
             style={[styles.tabIcon, {width: 24, height: 24}]}
             resizeMode="contain"
           />
-          <Text style={[styles.text, {fontSize: 10}]} numberOfLines={2}>
+          <Text style={styles.text} numberOfLines={1} ellipsizeMode="tail">
             Notifications
           </Text>
         </TouchableOpacity>
@@ -106,7 +108,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     paddingTop: 10,
     paddingBottom: Platform.OS === 'ios' ? 8 : 12,
-    paddingHorizontal: 4,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: -2},
     shadowOpacity: 0.15,

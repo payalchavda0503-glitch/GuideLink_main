@@ -375,28 +375,21 @@ const HomeIndex = ({navigation}) => {
                 );
               })}
             </ScrollView>
-            {isGuide != 1 && isGuide !== '1' ?
-            <View style={newStyles.allGuidesSearchRow}>
-              <TouchableOpacity
-                style={[
-                  newStyles.allGuidesBecomeButton,
-                  (isGuide != 1 && isGuide !== '1') && newStyles.allGuidesBecomeButtonDisabled,
-                ]}
-                disabled={isGuide != 1 && isGuide !== '1'}
-                onPress={() =>
-                  isGuide == 1 || isGuide === '1'
-                    ? navigation.navigate('AvailibilityTabIndex', {guide: true})
-                    : null
-                }>
-                <Text
-                  style={[
-                    newStyles.allGuidesBecomeButtonText,
-                    (isGuide != 1 && isGuide !== '1') && newStyles.allGuidesBecomeButtonTextDisabled,
-                  ]}>
-                  Become a Guide
-                </Text>
-              </TouchableOpacity>
-            </View>:null}
+            {(() => {
+              const isGuideUser = Number(isGuide) >= 1 || isGuide === '1' || isGuide === '2';
+              if (isGuideUser) return null;
+              return (
+                <View style={newStyles.allGuidesSearchRow}>
+                  <TouchableOpacity
+                    style={newStyles.allGuidesBecomeButton}
+                    onPress={() => navigation.navigate('ProfileTabIndex', {guide: true})}>
+                    <Text style={newStyles.allGuidesBecomeButtonText}>
+                      Become a Guide
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              );
+            })()}
           </View>
         );
 
@@ -805,7 +798,7 @@ const newStyles = StyleSheet.create({
     backgroundColor: COLORS.white,
     paddingHorizontal: 16,
     paddingTop: 16,
-    paddingBottom: 14,
+    paddingBottom: 0,
   },
   allGuidesCategoriesScrollView: {
     marginBottom: 14,
@@ -887,8 +880,7 @@ const newStyles = StyleSheet.create({
     alignItems: 'center',
   },
   allGuidesBecomeButtonDisabled: {
-    backgroundColor: COLORS.lightGray || '#ccc',
-    opacity: 0.7,
+    backgroundColor: COLORS.primary,
   },
   allGuidesBecomeButtonText: {
     color: COLORS.white,
@@ -897,7 +889,7 @@ const newStyles = StyleSheet.create({
   },
   allGuidesBecomeButtonTextDisabled: {
     color: COLORS.white,
-    opacity: 0.9,
+    fontWeight: '600',
   },
   quickActionsContainer: {
     flexDirection: 'row',

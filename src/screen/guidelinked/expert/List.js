@@ -19,14 +19,12 @@ const List = ({
     : [];
 
   const primaryCategoryTitleRaw =
-    categories.length > 0
+    item.category_name ||
+    (categories.length > 0
       ? categories[0]?.title || categories[0]?.name || null
-      : null;
+      : null);
 
-  const primaryCategoryTitle =
-    categories.length <= 1 || !primaryCategoryTitleRaw
-      ? primaryCategoryTitleRaw
-      : `${primaryCategoryTitleRaw} +${categories.length - 1}`;
+  const primaryCategoryTitle = primaryCategoryTitleRaw;
 
   const renderHighlightedText = (text, searchText, textStyle = {}) => {
     if (!text || text === 'null') {
@@ -81,7 +79,11 @@ const List = ({
         </View>
 
         <View style={styles.nameContent}>
-          <View style={[DefaultStyle.flexDirection, {alignItems: 'center'}]}>
+          <View
+            style={[
+              DefaultStyle.flexDirection,
+              {alignItems: 'center', flexWrap: 'wrap', marginBottom: 5},
+            ]}>
             {item.stripe_onboarding_status == 1 && (
               <View style={{marginEnd: 4, marginTop: 2}}>
                 <AppIcons
@@ -109,19 +111,12 @@ const List = ({
                 />
               </Pressable>
             )}
-          </View>
-
-          {primaryCategoryTitle && (
-            <View
-              style={[
-                DefaultStyle.flexDirection,
-                {alignItems: 'center', flexWrap: 'wrap', marginTop: 5, marginBottom: 5},
-              ]}>
-              <View style={styles.categoryPill}>
+            {primaryCategoryTitle && (
+              <View style={[styles.categoryPill, {marginLeft: 8}]}>
                 <Text style={styles.categoryPillText}>{primaryCategoryTitle}</Text>
               </View>
-            </View>
-          )}
+            )}
+          </View>
 
           {item.avg_rating > 0 && (
             <View style={DefaultStyle.flexDirection}>

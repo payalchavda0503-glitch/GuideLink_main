@@ -14,6 +14,7 @@ import {
   Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
+import IconFa from 'react-native-vector-icons/FontAwesome5';
 import BottomTab from '../../../component/BottomTab';
 import {useFocusEffect} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
@@ -845,35 +846,25 @@ const ShowPost = ({navigation}) => {
         </View>
 
         <View style={styles.engagementSection}>
-          <View style={styles.engagementItem}>
+          <View style={styles.engagementIconsRow}>
             <TouchableOpacity
-              style={styles.engagementLikeIconBtn}
+              style={styles.engagementIconBtn}
               onPress={() => handleLike(item.id, item.isLiked)}
               disabled={likingPostId === item.id}>
-              <Icon
+              <IconFa
                 name="thumbs-up"
-                size={16}
-                color={item.isLiked ? COLORS.primary : COLORS.black2}
+                size={18}
+                solid={item.isLiked}
+                color={item.isLiked ? COLORS.primary : COLORS.gray}
               />
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.engagementLikesTextBtn}
-              onPress={() => openLikesModal(item.id)}
-              disabled={likesModalLoading || (item.likes ?? 0) === 0}>
-              <Text style={styles.engagementText}>{item.likes} Likes</Text>
+              style={styles.engagementIconBtn}
+              onPress={() => handleOpenComments(item.id)}>
+              <Icon name="message-circle" size={18} color={COLORS.gray} />
             </TouchableOpacity>
-          </View>
-          <TouchableOpacity
-            style={styles.engagementItem}
-            onPress={() => handleOpenComments(item.id)}>
-            <Icon name="message-circle" size={16} color={COLORS.black2} />
-            <Text style={styles.engagementText}>
-              {item.comments} Comments
-            </Text>
-          </TouchableOpacity>
-          <View style={styles.engagementItem}>
             <TouchableOpacity
-              style={styles.engagementLikeIconBtn}
+              style={styles.engagementIconBtn}
               onPress={() => handleAura(item.id, item.isAuraGiven)}
               disabled={auraPostId === item.id}>
               <Image
@@ -882,18 +873,24 @@ const ShowPost = ({navigation}) => {
                 resizeMode="contain"
               />
             </TouchableOpacity>
+          </View>
+          <View style={styles.engagementCountsRow}>
             <TouchableOpacity
-              style={styles.engagementLikesTextBtn}
+              onPress={() => openLikesModal(item.id)}
+              disabled={likesModalLoading || (item.likes ?? 0) === 0}
+              style={styles.engagementCountBtn}>
+              <Text style={styles.engagementCountText}>{item.likes} Likes</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => handleOpenComments(item.id)}
+              style={styles.engagementCountBtn}>
+              <Text style={styles.engagementCountText}>{item.comments} Comments</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               onPress={() => openAuraModal(item.id)}
-              disabled={auraModalLoading || (item.aura ?? 0) === 0}>
-              <Text
-                style={[
-                  styles.engagementText,
-                  styles.auraText,
-                  item.isAuraGiven && {color: COLORS.primary},
-                ]}>
-                {item.aura} Aura
-              </Text>
+              disabled={auraModalLoading || (item.aura ?? 0) === 0}
+              style={styles.engagementCountBtn}>
+              <Text style={styles.engagementCountText}>{item.aura} Aura</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1781,9 +1778,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.lightGray,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.lightGray,
+  },
+  engagementIconsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  engagementIconBtn: {
+    paddingVertical: 4,
+    paddingHorizontal: 2,
+  },
+  engagementCountsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  engagementCountBtn: {
+    paddingVertical: 4,
+  },
+  engagementCountText: {
+    fontSize: 13,
+    color: COLORS.gray,
+    fontWeight: '500',
   },
   engagementItem: {
     flexDirection: 'row',

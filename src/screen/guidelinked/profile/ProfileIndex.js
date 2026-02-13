@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useFocusEffect} from '@react-navigation/native';
 import {Button} from '@rneui/themed';
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
   Platform,
   Pressable,
@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import DropDownPicker from 'react-native-dropdown-picker';
 import LinearGradient from 'react-native-linear-gradient';
 import {useDispatch} from 'react-redux';
 import AppIcons from '../../../component/AppIcons';
@@ -21,6 +22,7 @@ import {profile} from '../../../redux/AuthSlice';
 import {showToast} from '../../../redux/toastSlice';
 import Api from '../../../service/Api';
 import {
+  API_CATEGORY_LIST,
   API_GET_PROFILE,
   API_UPDATE_PROFILE,
 } from '../../../service/apiEndPoint';
@@ -35,6 +37,8 @@ const ProfileIndex = ({navigation, route}) => {
   const isFromGuide = route?.params?.guide === true;
   const [intro, setIntro] = useState('');
   const [expert_type, setExpertType] = useState([]);
+  const [primaryCategoryId, setPrimaryCategoryId] = useState(null);
+  const [primaryCategoryOpen, setPrimaryCategoryOpen] = useState(false);
   const [lookingFor, setLookingFor] = useState('');
   const [search, setSearch] = useState('');
   const [loaderVisible, setLoaderVisible] = useState(false);
@@ -47,7 +51,17 @@ const ProfileIndex = ({navigation, route}) => {
   const [tiktok, setTiktok] = useState('');
   const STORAGE_KEY = 'PROFILE_AUTOSAVE';
 
-  const expert = ['student_expert', 'other_expert'];
+  const defaultExpertTypes = [
+    {value: 'student_expert', label: 'College Guides'},
+    {value: 'other_expert', label: 'Other Guides'},
+  ];
+  const [expertTypeOptions, setExpertTypeOptions] = useState(defaultExpertTypes);
+
+  const primaryCategoryOptions = useMemo(() => {
+    return expertTypeOptions
+      .filter(opt => expert_type.includes(opt.value))
+      .map(opt => ({label: opt.label, value: opt.value}));
+  }, [expertTypeOptions, expert_type]);
 
   const addHelp = () => {
     setHelp([...help, {id: -1, question: '', answer: ''}]);
@@ -93,7 +107,22 @@ const ProfileIndex = ({navigation, route}) => {
       try {
         const formdata = new FormData();
         formdata.append('introduction', intro);
-        formdata.append('expert_type', JSON.stringify(expert_type));
+        const guideCategoryIds = expert_type
+          .map(t => {
+            const n = Number(t);
+            if (!isNaN(n)) return String(n);
+            const opt = expertTypeOptions.find(
+              o => o.slug === t || o.value === t || String(o.id) === t,
+            );
+            return opt ? String(opt.id) : null;
+          })
+          .filter(Boolean);
+        guideCategoryIds.forEach(id => {
+          formdata.append('guide_category_id[]', id);
+        });
+        if (primaryCategoryId) {
+          formdata.append('guide_primary_category_id', primaryCategoryId);
+        }
         formdata.append('looking_for', lookingFor);
         formdata.append('linked_in', Linkedin);
         formdata.append('facebook', fb);
@@ -107,7 +136,7 @@ const ProfileIndex = ({navigation, route}) => {
           formdata.append(`help_with[${i}][id]`, s.id);
         });
 
-        //console.log(formdata);
+        console.log("formdata",formdata);
 
         setLoaderVisible(true);
         const response = await Api.post(API_UPDATE_PROFILE, formdata);
@@ -140,9 +169,42 @@ const ProfileIndex = ({navigation, route}) => {
         } else {
           setIntro(result.introduction);
         }
-        if (result.expert_type == 'null' || result.expert_type == null) {
+        const rawInterests =
+          result.guide_category_id ??
+          result.expert_type ??
+          result.guide_category_ids ??
+          [];
+        if (rawInterests != null && rawInterests !== 'null') {
+          let arr = [];
+          if (Array.isArray(rawInterests)) {
+            arr = rawInterests.map(v =>
+              typeof v === 'object' && v != null && v.id != null
+                ? String(v.id)
+                : typeof v === 'number'
+                  ? String(v)
+                  : String(v),
+            );
+          } else if (typeof rawInterests === 'string') {
+            arr = rawInterests
+              .split(',')
+              .map(s => s.trim())
+              .filter(Boolean);
+          } else {
+            arr = [String(rawInterests)];
+          }
+          setExpertType(arr);
+        }
+
+        const rawPrimary =
+          result.guide_primary_category_id ??
+          result.primary_category_id ??
+          null;
+        if (rawPrimary != null && rawPrimary !== 'null' && rawPrimary !== '') {
+          setPrimaryCategoryId(
+            typeof rawPrimary === 'number' ? String(rawPrimary) : String(rawPrimary),
+          );
         } else {
-          setExpertType(result.expert_type);
+          setPrimaryCategoryId(null);
         }
 
         if (result.looking_for == 'null' || result.looking_for == null) {
@@ -199,7 +261,7 @@ const ProfileIndex = ({navigation, route}) => {
           }),
         );
         setLoaderVisible(false);
-        loadSavedData();
+        setFetchProfile(false);
       }
     } catch (error) {
       log(error);
@@ -207,11 +269,62 @@ const ProfileIndex = ({navigation, route}) => {
     }
   };
 
+  const fetchExpertTypeOptions = useCallback(async () => {
+    try {
+      const res = await Api.get(`${API_CATEGORY_LIST}?show=all`);
+      if (res?.status === 'RC200' && Array.isArray(res?.data) && res.data.length > 0) {
+        const options = res.data
+          .filter(item => {
+            const id = item.id;
+            return id != null && String(item.slug || item.category_slug || '') !== 'all_guides';
+          })
+          .map(item => {
+            const label = item.name || item.title || item.category_name || String(item.id);
+            const id = item.id;
+            const value = String(id);
+            const slug = item.slug || item.category_slug || null;
+            return { id, value, label, slug };
+          });
+        if (options.length > 0) {
+          setExpertTypeOptions(options);
+        }
+      }
+    } catch (e) {
+      // keep defaultExpertTypes on failure
+    }
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       getProfile();
-    }, []),
+      fetchExpertTypeOptions();
+    }, [fetchExpertTypeOptions]),
   );
+
+  // When category options load from API, normalize expert_type from slugs to ids
+  useEffect(() => {
+    if (expertTypeOptions.length === 0 || expertTypeOptions[0].id == null) return;
+    setExpertType(prev =>
+      prev.map(t => {
+        const n = Number(t);
+        if (!isNaN(n)) return String(t);
+        const opt = expertTypeOptions.find(
+          o => o.slug === t || o.value === t || String(o.id) === t,
+        );
+        return opt ? String(opt.id) : t;
+      }),
+    );
+  }, [expertTypeOptions]);
+
+  // Clear primary category if it is no longer in selected interests
+  useEffect(() => {
+    if (
+      primaryCategoryId &&
+      !expert_type.includes(primaryCategoryId)
+    ) {
+      setPrimaryCategoryId(null);
+    }
+  }, [expert_type, primaryCategoryId]);
 
   const toggleExpertType = type => {
     if (expert_type.includes(type)) {
@@ -229,6 +342,7 @@ const ProfileIndex = ({navigation, route}) => {
         const savedData = JSON.parse(jsonValue);
         setIntro(savedData.intro || '');
         setExpertType(savedData.expert_type || []);
+        setPrimaryCategoryId(savedData.primaryCategoryId ?? null);
         setLookingFor(savedData.lookingFor || '');
         setInsta(savedData.insta || '');
         setFb(savedData.fb || '');
@@ -248,6 +362,7 @@ const ProfileIndex = ({navigation, route}) => {
       const data = {
         intro,
         expert_type,
+        primaryCategoryId,
         lookingFor,
         insta,
         fb,
@@ -271,6 +386,7 @@ const ProfileIndex = ({navigation, route}) => {
   }, [
     intro,
     expert_type,
+    primaryCategoryId,
     lookingFor,
     insta,
     fb,
@@ -303,7 +419,7 @@ const ProfileIndex = ({navigation, route}) => {
             <ScrollView
               automaticallyAdjustKeyboardInsets={true}
               showsVerticalScrollIndicator={false}>
-              <View style={{marginBottom: 30, paddingHorizontal: 15}}>
+              <View style={{marginBottom: 12, paddingHorizontal: 15}}>
                 {isFromGuide && (
                   <View
                     style={{
@@ -312,7 +428,7 @@ const ProfileIndex = ({navigation, route}) => {
                       paddingHorizontal: 12,
                       paddingVertical: 6,
                       borderRadius: 20,
-                      marginBottom: 10,
+                      marginBottom: 6,
                     }}>
                     <Text
                       style={{
@@ -347,7 +463,7 @@ const ProfileIndex = ({navigation, route}) => {
                     <View
                       style={[
                         DefaultStyle.flexDirectionSpace,
-                        {marginEnd: 4, marginTop: 10},
+                        {marginEnd: 4, marginTop: 4},
                       ]}>
                       <Text
                         style={[
@@ -388,43 +504,43 @@ const ProfileIndex = ({navigation, route}) => {
                       placeholderTextColor={COLORS.gray}
                     />
 
-                    <View style={{marginTop: 15}}>
+                    <View style={{marginTop: 10}}>
                       <Text
                         style={[
                           DefaultStyle.blackBold,
-                          {color: COLORS.primary, marginBottom: 8},
+                          {color: COLORS.primary, marginBottom: 4},
                         ]}>
-                        Select Expert Type
+                        Select your interest
                       </Text>
 
                       <View
                         style={{
                           flexDirection: 'row',
                           flexWrap: 'wrap',
-                          gap: 20,
+                          gap: 10,
                         }}>
-                        {expert.map(type => (
+                        {expertTypeOptions.map(opt => (
                           <TouchableOpacity
-                            key={type}
+                            key={opt.value}
                             style={{
                               flexDirection: 'row',
                               alignItems: 'center',
-                              marginRight: 20,
-                              marginBottom: 10,
+                              marginRight: 10,
+                              marginBottom: 6,
                             }}
-                            onPress={() => toggleExpertType(type)}>
+                            onPress={() => toggleExpertType(opt.value)}>
                             <View
                               style={{
                                 height: 18,
                                 width: 18,
-                                borderRadius: 4, // More like a square checkbox
+                                borderRadius: 4,
                                 borderWidth: 2,
                                 borderColor: COLORS.primary,
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 marginRight: 8,
                               }}>
-                              {expert_type.includes(type) && (
+                              {expert_type.includes(opt.value) && (
                                 <View
                                   style={{
                                     height: 10,
@@ -435,13 +551,44 @@ const ProfileIndex = ({navigation, route}) => {
                               )}
                             </View>
                             <Text style={{fontSize: 14}}>
-                              {type === 'student_expert'
-                                ? 'College Guides'
-                                : 'Other Guides'}
+                              {opt.label}
                             </Text>
                           </TouchableOpacity>
                         ))}
                       </View>
+                    </View>
+
+                    <View style={{marginTop: 15, zIndex: 1000}}>
+                      <Text
+                        style={[
+                          DefaultStyle.blackBold,
+                          {color: COLORS.primary, marginBottom: 8},
+                        ]}>
+                        Primary category
+                      </Text>
+                      <DropDownPicker
+                        open={primaryCategoryOpen}
+                        value={primaryCategoryId}
+                        items={primaryCategoryOptions}
+                        setOpen={setPrimaryCategoryOpen}
+                        setValue={setPrimaryCategoryId}
+                        placeholder={
+                          primaryCategoryOptions.length === 0
+                            ? 'Select interests first'
+                            : 'Select primary category'
+                        }
+                        disabled={primaryCategoryOptions.length === 0}
+                        style={styles.primaryCategoryDropdown}
+                        dropDownContainerStyle={styles.primaryCategoryDropdownContainer}
+                        textStyle={styles.primaryCategoryDropdownText}
+                        placeholderStyle={styles.primaryCategoryDropdownPlaceholder}
+                        listItemContainerStyle={styles.primaryCategoryListItem}
+                        zIndex={1000}
+                        zIndexInverse={999}
+                        listMode="MODAL"
+                        modalTitle="Select primary category"
+                        modalAnimationType="slide"
+                      />
                     </View>
 
                     <View
@@ -696,7 +843,7 @@ const ProfileIndex = ({navigation, route}) => {
               DefaultStyle.btnDanger,
               {
                 marginTop: 10,
-                marginBottom: Platform.OS == 'ios' ? 20 : 20,
+                marginBottom: Platform.OS == 'ios' ? 20 : 30,
                 paddingHorizontal: 40,
               },
             ]}

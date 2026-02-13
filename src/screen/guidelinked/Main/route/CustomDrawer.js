@@ -4,7 +4,15 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import React, {useCallback, useRef, useState} from 'react';
-import {FlatList, Image, Pressable, ScrollView, Text, View} from 'react-native';
+import {
+  FlatList,
+  Image,
+  Linking,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {SvgUri} from 'react-native-svg';
 import {useDispatch, useSelector} from 'react-redux';
@@ -19,7 +27,6 @@ import ImageCropPicker from 'react-native-image-crop-picker';
 import Share from 'react-native-share';
 import ic_email from '../../../../assets/images/ic-mail.png';
 import ic_earning from '../../../../assets/images/ic_earning.png';
-import ic_home from '../../../../assets/images/ic_home.png';
 import ic_verify from '../../../../assets/images/ic_verify.png';
 import ic_work from '../../../../assets/images/ic_work.png';
 import ic_logout from '../../../../assets/images/logout.png';
@@ -105,27 +112,21 @@ const CustomDrawer = () => {
   const DATA = [
     {
       id: '0',
-      img: ic_home,
+      img: 'home',
       title: 'Home',
       navigate: 'HomeTabIndex',
-      type: 'AntDesign',
-      isVector: false,
-    },
-    {
-      id: 'my-timeline',
-      img: 'list',
-      title: 'My Timeline',
-      navigate: 'MyTimeline',
       type: 'Feather',
       isVector: true,
     },
     {
-      id: 'all-bookings',
-      img: ic_my_bookings,
-      title: 'All Bookings',
-      navigate: 'BookingTabIndex',
-      isVector: false,
+      id: 'my-timeline',
+      img: 'history',
+      title: 'My Timeline',
+      navigate: 'MyTimeline',
+      type: 'MaterialCommunityIcons',
+      isVector: true,
     },
+ 
     {
       id: '18',
       isBecome: isGuide == '-1' ? false : true,
@@ -144,7 +145,7 @@ const CustomDrawer = () => {
         },
         {
           id: '12',
-          img: 'calendar',
+          img: 'clock',
           type: 'Feather',
           title: 'Time Slots / Rate ($)',
           navigate: 'AvailibilityTabIndex',
@@ -166,6 +167,14 @@ const CustomDrawer = () => {
           isVector: false,
         },
       ],
+    },
+    {
+      id: 'all-bookings',
+      img: 'calendar',
+      title: 'All Bookings',
+      navigate: 'BookingTabIndex',
+      type: 'Feather',
+      isVector: true,
     },
     {
       id: '2',
@@ -213,6 +222,22 @@ const CustomDrawer = () => {
       title: 'FAQs',
       navigate: 'FAQScreen',
       isVector: false,
+    },
+    {
+      id: 'privacy-policy',
+      img: 'shield',
+      title: 'Privacy Policy',
+      type: 'Feather',
+      isVector: true,
+      openUrl: 'https://guidelinked.com/privacy-policy',
+    },
+    {
+      id: 'terms-conditions',
+      img: 'file-text',
+      title: 'Terms and Conditions',
+      type: 'Feather',
+      isVector: true,
+      openUrl: 'https://guidelinked.com/terms-of-use',
     },
     {
       id: '9',
@@ -472,7 +497,9 @@ const CustomDrawer = () => {
                 ? DialogBox()
                 : item.navigate === 'Share'
                 ? onShare()
-                : navigation.navigate(item.navigate);
+                : item.openUrl
+                ? Linking.openURL(item.openUrl)
+                : navigation.navigate(item.navigate, item.params || {});
             }
             setBecomeExpand(false);
           }

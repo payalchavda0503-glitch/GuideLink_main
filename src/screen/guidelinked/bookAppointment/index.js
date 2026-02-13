@@ -476,9 +476,10 @@ const BookAppointment = ({navigation, route}) => {
           <Text
             style={[
               styles.itemText,
+              item.selected ? styles.itemTextSelected : {},
               {
-                color: item.selected ? COLORS.blue : COLORS.black,
-                fontWeight: 'semibold',
+                color: item.selected ? COLORS.white : COLORS.black,
+                fontWeight: '600',
               },
             ]}>
             {item.label}
@@ -1158,28 +1159,31 @@ export const styles = StyleSheet.create({
   },
   itemContainer: {
     backgroundColor: COLORS.white,
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
     marginHorizontal: 2,
     marginVertical: 4,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   itemText: {
     fontSize: 14,
+    fontWeight: '600',
   },
   itemContainerSelected: {
-    backgroundColor: COLORS.lightGray,
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
   },
   itemContainerDisabled: {
     backgroundColor: COLORS.darkgray,
+    borderColor: COLORS.darkgray,
   },
   itemTextSelected: {
-    color: '#FFF',
+    color: COLORS.white,
   },
 });
 

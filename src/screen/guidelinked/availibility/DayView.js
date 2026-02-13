@@ -1,4 +1,4 @@
-import { ActivityIndicator, FlatList, Text, TouchableOpacity, View, Modal, Pressable} from "react-native";
+import { Text, TouchableOpacity, View, Modal, Pressable } from "react-native";
 import { COLORS } from "../../../util/Theme";
 import { useEffect, useState } from "react";
 import Api from "../../../service/Api";
@@ -55,8 +55,8 @@ const DayView = ({navigation, data, onDeleteComplete, index}) => {
                 {data.length>0 &&(
                     <TouchableOpacity
                         style={{
-                            padding: 10,
-                            paddingHorizontal: 20
+                            paddingVertical: 4,
+                            paddingHorizontal: 8,
                         }}
                         onPress={(event) => {
                             event.stopPropagation()
@@ -68,41 +68,30 @@ const DayView = ({navigation, data, onDeleteComplete, index}) => {
                     </TouchableOpacity>
                 )}
                 
-                <FlatList
-                    data={data}
-                    keyExtractor={itm => `level_2_${itm.label}`}
-                    // ItemSeparatorComponent={Divider}
-                    nestedScrollEnabled={false}
-                    renderItem={({item:subItem, index:idx})=>(
-                    <View
-                        style={[
-                        {
-                            padding: 5,
-                            paddingHorizontal: 20,
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            backgroundColor: idx%2==0 ? '#F5F5F5' : '#FFFFFF'
-                        },
-                        ]}>
-                        <Text style={styles.listItemSlotHeading}>{subItem.label}</Text>
-                        <TouchableOpacity
-                            style={{padding: 3}}
-                            onPress={() => {
-
-                                setDeleteSlotTimeArr([{id:subItem.id}])
-                                setShowDeletePopup(true)
-                            
-                            }}>
-                            <AppIcons
-                                type={'AntDesign'}
-                                name={'closesquareo'}
-                                size={28}
-                                color={COLORS.red}
-                            />
-                        </TouchableOpacity>
+                <View style={{flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 4, paddingBottom: 4}}>
+                    {data.map((subItem, idx) => (
+                        <View
+                            key={`level_2_${subItem.label}_${idx}`}
+                            style={styles.slotTube}>
+                            <Text style={styles.slotTubeText}>
+                              {subItem.label}
+                            </Text>
+                            <TouchableOpacity
+                                style={{padding: 2, flexShrink: 0}}
+                                onPress={() => {
+                                    setDeleteSlotTimeArr([{id: subItem.id}]);
+                                    setShowDeletePopup(true);
+                                }}>
+                                <AppIcons
+                                    type={'MaterialCommunityIcons'}
+                                    name={'trash-can-outline'}
+                                    size={20}
+                                    color={COLORS.red}
+                                />
+                            </TouchableOpacity>
                         </View>
-                    )}
-                />
+                    ))}
+                </View>
                 
             </View>
 

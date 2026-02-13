@@ -222,6 +222,30 @@ export const styles = StyleSheet.create({
     marginBottom: 15,
   },
   dropdownPlaceholder: {color: COLORS.black, fontSize: 14, fontWeight: 'bold'},
+  primaryCategoryDropdown: {
+    borderWidth: 1,
+    borderColor: COLORS.grayed,
+    borderRadius: 8,
+    backgroundColor: 'transparent',
+    minHeight: 44,
+  },
+  primaryCategoryDropdownContainer: {
+    borderWidth: 1,
+    borderColor: COLORS.grayed,
+    borderRadius: 8,
+    backgroundColor: 'transparent',
+  },
+  primaryCategoryDropdownText: {
+    fontSize: 14,
+    color: COLORS.black,
+  },
+  primaryCategoryDropdownPlaceholder: {
+    color: COLORS.gray,
+  },
+  primaryCategoryListItem: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+  },
   removeBtn: {
     justifyContent: 'center', // Vertically center content
     alignItems: 'center', // Horizontally center content
