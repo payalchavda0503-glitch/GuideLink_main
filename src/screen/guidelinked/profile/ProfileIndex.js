@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import {MultiSelect} from 'react-native-element-dropdown';
 import DropDownPicker from 'react-native-dropdown-picker';
 import LinearGradient from 'react-native-linear-gradient';
 import {useDispatch} from 'react-redux';
@@ -49,6 +50,7 @@ const ProfileIndex = ({navigation, route}) => {
   const [help, setHelp] = useState([{id: -1, question: '', answer: ''}]);
   const [youtube, setYoutube] = useState('');
   const [tiktok, setTiktok] = useState('');
+  const [xLink, setXLink] = useState('');
   const STORAGE_KEY = 'PROFILE_AUTOSAVE';
 
   const defaultExpertTypes = [
@@ -100,6 +102,8 @@ const ProfileIndex = ({navigation, route}) => {
     if (!intro) {
       // showToast('Please enter introduction');
       dispatch(showToast('Please enter introduction'));
+    } else if (expert_type.length > 0 && !primaryCategoryId) {
+      dispatch(showToast('Please select a primary category.'));
     } else if (helpEmptyFields) {
       // showToast('Complete the empty sections.');
       dispatch(showToast('Complete the empty sections.'));
@@ -129,6 +133,7 @@ const ProfileIndex = ({navigation, route}) => {
         formdata.append('instagram', insta);
         formdata.append('youtube', youtube);
         formdata.append('tiktok', tiktok);
+        formdata.append('x_link', xLink ?? '');
 
         help.map((s, i) => {
           formdata.append(`help_with[${i}][question]`, s.question);
@@ -162,7 +167,7 @@ const ProfileIndex = ({navigation, route}) => {
 
       if (response.status == 'RC200') {
         let result = response.data;
-
+         console.log("getprofile",result)
         setIsGuide(result.is_guide);
 
         if (result.introduction == 'null' || result.introduction == null) {
@@ -171,19 +176,30 @@ const ProfileIndex = ({navigation, route}) => {
         }
         const rawInterests =
           result.guide_category_id ??
-          result.expert_type ??
           result.guide_category_ids ??
+          result.expert_type ??
+          result.category_ids ??
+          (Array.isArray(result.categories)
+            ? result.categories.map(c => c?.id ?? c?.category_id ?? c)
+            : null) ??
+          (Array.isArray(result.guide_categories)
+            ? result.guide_categories.map(c => c?.id ?? c?.category_id ?? c)
+            : null) ??
           [];
         if (rawInterests != null && rawInterests !== 'null') {
           let arr = [];
           if (Array.isArray(rawInterests)) {
-            arr = rawInterests.map(v =>
-              typeof v === 'object' && v != null && v.id != null
-                ? String(v.id)
-                : typeof v === 'number'
-                  ? String(v)
-                  : String(v),
-            );
+            arr = rawInterests
+              .map(v => {
+                if (v == null) return null;
+                if (typeof v === 'object') {
+                  const id = v.id ?? v.category_id ?? v.guide_category_id;
+                  return id != null ? String(id) : null;
+                }
+                if (typeof v === 'number') return String(v);
+                return String(v);
+              })
+              .filter(Boolean);
           } else if (typeof rawInterests === 'string') {
             arr = rawInterests
               .split(',')
@@ -192,7 +208,7 @@ const ProfileIndex = ({navigation, route}) => {
           } else {
             arr = [String(rawInterests)];
           }
-          setExpertType(arr);
+          if (arr.length > 0) setExpertType(arr);
         }
 
         const rawPrimary =
@@ -200,9 +216,9 @@ const ProfileIndex = ({navigation, route}) => {
           result.primary_category_id ??
           null;
         if (rawPrimary != null && rawPrimary !== 'null' && rawPrimary !== '') {
-          setPrimaryCategoryId(
-            typeof rawPrimary === 'number' ? String(rawPrimary) : String(rawPrimary),
-          );
+          const primaryStr =
+            typeof rawPrimary === 'number' ? String(rawPrimary) : String(rawPrimary);
+          setPrimaryCategoryId(primaryStr);
         } else {
           setPrimaryCategoryId(null);
         }
@@ -247,6 +263,8 @@ const ProfileIndex = ({navigation, route}) => {
           }
         }
 
+        setXLink(result.x_link != null && result.x_link !== 'null' ? String(result.x_link) : '');
+
         setHelp(
           result.help_with.length > 0
             ? result.help_with
@@ -271,7 +289,7 @@ const ProfileIndex = ({navigation, route}) => {
 
   const fetchExpertTypeOptions = useCallback(async () => {
     try {
-      const res = await Api.get(`${API_CATEGORY_LIST}?show=all`);
+      const res = await Api.get(`${API_CATEGORY_LIST}`);
       if (res?.status === 'RC200' && Array.isArray(res?.data) && res.data.length > 0) {
         const options = res.data
           .filter(item => {
@@ -349,6 +367,7 @@ const ProfileIndex = ({navigation, route}) => {
         setLinkedin(savedData.Linkedin || '');
         setYoutube(savedData.youtube || '');
         setTiktok(savedData.tiktok || '');
+        setXLink(savedData.xLink || '');
         setHelp(savedData.help || [{id: -1, question: '', answer: ''}]);
       }
       setFetchProfile(false);
@@ -369,6 +388,7 @@ const ProfileIndex = ({navigation, route}) => {
         Linkedin,
         youtube,
         tiktok,
+        xLink,
         help,
       };
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -393,6 +413,7 @@ const ProfileIndex = ({navigation, route}) => {
     Linkedin,
     youtube,
     tiktok,
+    xLink,
     help,
   ]);
 
@@ -508,54 +529,46 @@ const ProfileIndex = ({navigation, route}) => {
                       <Text
                         style={[
                           DefaultStyle.blackBold,
-                          {color: COLORS.primary, marginBottom: 4},
+                          {color: COLORS.primary, marginBottom: 8},
                         ]}>
-                        Select your interest
+                        Select your Category(s)
                       </Text>
 
-                      <View
+                      <MultiSelect
+                        data={expertTypeOptions}
+                        labelField="label"
+                        valueField="value"
+                        placeholder="Select your Category(s)"
+                        value={expert_type}
+                        onChange={item => setExpertType(item)}
                         style={{
-                          flexDirection: 'row',
-                          flexWrap: 'wrap',
-                          gap: 10,
-                        }}>
-                        {expertTypeOptions.map(opt => (
-                          <TouchableOpacity
-                            key={opt.value}
-                            style={{
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                              marginRight: 10,
-                              marginBottom: 6,
-                            }}
-                            onPress={() => toggleExpertType(opt.value)}>
-                            <View
-                              style={{
-                                height: 18,
-                                width: 18,
-                                borderRadius: 4,
-                                borderWidth: 2,
-                                borderColor: COLORS.primary,
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                marginRight: 8,
-                              }}>
-                              {expert_type.includes(opt.value) && (
-                                <View
-                                  style={{
-                                    height: 10,
-                                    width: 10,
-                                    backgroundColor: COLORS.primary,
-                                  }}
-                                />
-                              )}
-                            </View>
-                            <Text style={{fontSize: 14}}>
-                              {opt.label}
-                            </Text>
-                          </TouchableOpacity>
-                        ))}
-                      </View>
+                          paddingHorizontal: 12,
+                          paddingVertical: 12,
+                          borderRadius: 10,
+                          borderWidth: 1,
+                          borderColor: COLORS.gray,
+                          minHeight: 48,
+                        }}
+                        containerStyle={{marginBottom: 4}}
+                        placeholderStyle={{color: COLORS.gray, fontSize: 14}}
+                        selectedStyle={{
+                          borderRadius: 6,
+                          backgroundColor: COLORS.primary,
+                          paddingHorizontal: 8,
+                          paddingVertical: 4,
+                          marginRight: 6,
+                          marginBottom: 6,
+                        }}
+                        selectedTextStyle={{color: COLORS.white, fontSize: 13}}
+                        inputSearchStyle={{
+                          height: 44,
+                          borderRadius: 8,
+                          paddingHorizontal: 12,
+                          borderColor: COLORS.gray,
+                        }}
+                        search
+                        searchPlaceholder="Search categories..."
+                      />
                     </View>
 
                     <View style={{marginTop: 15, zIndex: 1000}}>
@@ -694,7 +707,7 @@ const ProfileIndex = ({navigation, route}) => {
                       Social Profile Links
                     </Text>
 
-                    <View style={styles.socialInput}>
+                    <View style={styles.socialRow}>
                       <LinearGradient
                         colors={[COLORS.Yellow, COLORS.darkpink, COLORS.pink]}
                         style={[
@@ -712,25 +725,25 @@ const ProfileIndex = ({navigation, route}) => {
                           color={COLORS.white}
                         />
                       </LinearGradient>
-                      <TextInput
-                        style={styles.socialInput1}
-                        placeholderTextColor={COLORS.gray}
-                        value={insta}
-                        onChangeText={text => setInsta(text)}
-                        keyboardType="default"
-                        placeholder="Instagram (Type URL)"
-                      />
+                      <View style={{flex: 1, alignSelf: 'stretch', paddingTop: 2}}>
+                        <Text style={{fontSize: 15, color: COLORS.black, fontWeight: '600', marginLeft: 33}}>Instagram</Text>
+                      </View>
                     </View>
+                    <Text style={{fontSize: 12, color: COLORS.gray, marginBottom: 4, alignSelf: 'stretch'}}>ex. - https://instagram.com/yourusername</Text>
+                    <TextInput
+                      style={[styles.socialInput1, styles.socialInputField]}
+                      placeholderTextColor={COLORS.gray}
+                      value={insta}
+                      onChangeText={text => setInsta(text)}
+                      keyboardType="default"
+                      placeholder="Enter URL"
+                    />
 
-                    <View style={styles.socialInput}>
+                    <View style={styles.socialRow}>
                       <View
                         style={[
                           styles.circlefb,
-                          {
-                            backgroundColor: COLORS.blue,
-                            width: 25,
-                            height: 25,
-                          },
+                          {backgroundColor: COLORS.blue, width: 25, height: 25},
                         ]}>
                         <AppIcons
                           type={'FontAwesome'}
@@ -739,26 +752,25 @@ const ProfileIndex = ({navigation, route}) => {
                           color={COLORS.white}
                         />
                       </View>
-                      <TextInput
-                        style={styles.socialInput1}
-                        placeholderTextColor={COLORS.gray}
-                        value={fb}
-                        onChangeText={text => setFb(text)}
-                        keyboardType="default"
-                        placeholder="Facebook (Type URL)"
-                      />
+                      <View style={{flex: 1, alignSelf: 'stretch', paddingTop: 2}}>
+                        <Text style={{fontSize: 15, color: COLORS.black, fontWeight: '600', marginLeft: 33}}>Facebook</Text>
+                      </View>
                     </View>
+                    <Text style={{fontSize: 12, color: COLORS.gray, marginBottom: 4, alignSelf: 'stretch'}}>ex. - https://facebook.com/yourusername</Text>
+                    <TextInput
+                      style={[styles.socialInput1, styles.socialInputField]}
+                      placeholderTextColor={COLORS.gray}
+                      value={fb}
+                      onChangeText={text => setFb(text)}
+                      keyboardType="default"
+                      placeholder="Enter URL"
+                    />
 
-                    <View style={styles.socialInput}>
+                    <View style={styles.socialRow}>
                       <View
                         style={[
                           styles.circlelinkedin,
-                          {
-                            backgroundColor: COLORS.primary,
-                            marginStart: 0,
-                            width: 25,
-                            height: 25,
-                          },
+                          {backgroundColor: COLORS.primary, marginStart: 0, width: 25, height: 25},
                         ]}>
                         <AppIcons
                           type={'FontAwesome'}
@@ -767,26 +779,25 @@ const ProfileIndex = ({navigation, route}) => {
                           color={COLORS.white}
                         />
                       </View>
-                      <TextInput
-                        style={styles.socialInput1}
-                        placeholderTextColor={COLORS.gray}
-                        value={Linkedin}
-                        onChangeText={text => setLinkedin(text)}
-                        keyboardType="default"
-                        placeholder="Linkedin (Type URL)"
-                      />
+                      <View style={{flex: 1, alignSelf: 'stretch', paddingTop: 2}}>
+                        <Text style={{fontSize: 15, color: COLORS.black, fontWeight: '600', marginLeft: 33}}>LinkedIn</Text>
+                      </View>
                     </View>
+                    <Text style={{fontSize: 12, color: COLORS.gray, marginBottom: 4, alignSelf: 'stretch'}}>ex. - https://linkedin.com/in/yourusername</Text>
+                    <TextInput
+                      style={[styles.socialInput1, styles.socialInputField]}
+                      placeholderTextColor={COLORS.gray}
+                      value={Linkedin}
+                      onChangeText={text => setLinkedin(text)}
+                      keyboardType="default"
+                      placeholder="Enter URL"
+                    />
 
-                    <View style={styles.socialInput}>
+                    <View style={styles.socialRow}>
                       <View
                         style={[
                           styles.circlelinkedin,
-                          {
-                            backgroundColor: COLORS.black,
-                            marginStart: 0,
-                            width: 25,
-                            height: 25,
-                          },
+                          {backgroundColor: COLORS.black, marginStart: 0, width: 25, height: 25},
                         ]}>
                         <AppIcons
                           type={'MaterialIcons'}
@@ -795,42 +806,72 @@ const ProfileIndex = ({navigation, route}) => {
                           color={COLORS.white}
                         />
                       </View>
-                      <TextInput
-                        style={styles.socialInput1}
-                        placeholderTextColor={COLORS.gray}
-                        value={tiktok}
-                        onChangeText={text => setTiktok(text)}
-                        keyboardType="default"
-                        placeholder="Tiktok (Type URL)"
-                      />
+                      <View style={{flex: 1, alignSelf: 'stretch', paddingTop: 2}}>
+                        <Text style={{fontSize: 15, color: COLORS.black, fontWeight: '600', marginLeft: 33}}>TikTok</Text>
+                      </View>
                     </View>
-                  </View>
-
-                  <View style={styles.socialInput}>
-                    <View
-                      style={[
-                        styles.circlelinkedin,
-                        {
-                          backgroundColor: COLORS.red,
-                          marginStart: 0,
-                          width: 25,
-                          height: 25,
-                        },
-                      ]}>
-                      <AppIcons
-                        type={'Entypo'}
-                        name={'youtube'}
-                        size={18}
-                        color={COLORS.white}
-                      />
-                    </View>
+                    <Text style={{fontSize: 12, color: COLORS.gray, marginBottom: 4, alignSelf: 'stretch'}}>ex. - https://tiktok.com/@yourusername</Text>
                     <TextInput
-                      style={styles.socialInput1}
+                      style={[styles.socialInput1, styles.socialInputField]}
+                      placeholderTextColor={COLORS.gray}
+                      value={tiktok}
+                      onChangeText={text => setTiktok(text)}
+                      keyboardType="default"
+                      placeholder="Enter URL"
+                    />
+
+                    <View style={styles.socialRow}>
+                      <View
+                        style={[
+                          styles.circlelinkedin,
+                          {backgroundColor: COLORS.red, marginStart: 0, width: 25, height: 25},
+                        ]}>
+                        <AppIcons
+                          type={'Entypo'}
+                          name={'youtube'}
+                          size={18}
+                          color={COLORS.white}
+                        />
+                      </View>
+                      <View style={{flex: 1, alignSelf: 'stretch', paddingTop: 2}}>
+                        <Text style={{fontSize: 15, color: COLORS.black, fontWeight: '600', marginLeft: 33}}>YouTube</Text>
+                      </View>
+                    </View>
+                    <Text style={{fontSize: 12, color: COLORS.gray, marginBottom: 4, alignSelf: 'stretch'}}>ex. - https://youtube.com/@yourusername</Text>
+                    <TextInput
+                      style={[styles.socialInput1, styles.socialInputField]}
                       placeholderTextColor={COLORS.gray}
                       value={youtube}
                       onChangeText={text => setYoutube(text)}
                       keyboardType="default"
-                      placeholder="Youtube (Type URL)"
+                      placeholder="Enter URL"
+                    />
+
+                    <View style={styles.socialRow}>
+                      <View
+                        style={[
+                          styles.circlelinkedin,
+                          {backgroundColor: COLORS.black, marginStart: 0, width: 25, height: 25},
+                        ]}>
+                        <AppIcons
+                          type={'FontAwesome'}
+                          name={'twitter'}
+                          size={18}
+                          color={COLORS.white}
+                        />
+                      </View>
+                      <View style={{flex: 1, alignSelf: 'stretch', paddingTop: 2}}>
+                        <Text style={{fontSize: 15, color: COLORS.black, fontWeight: '600', marginLeft: 33}}>X (Twitter)</Text>
+                      </View>
+                    </View>
+                    <Text style={{fontSize: 12, color: COLORS.gray, marginBottom: 4, alignSelf: 'stretch'}}>ex. - https://twitter.com/yourusername</Text>
+                    <TextInput
+                      style={[styles.socialInput1, styles.socialInputField]}
+                      placeholderTextColor={COLORS.gray}
+                      value={xLink ?? ''}
+                      onChangeText={text => setXLink(text)}
+                      keyboardType="default"
+                      placeholder="Enter URL"
                     />
                   </View>
                 </View>
@@ -838,7 +879,7 @@ const ProfileIndex = ({navigation, route}) => {
             </ScrollView>
           </View>
           <Button
-            title={isGuide ? 'Save Changes' : 'Save & Next'}
+            title={isGuide ? 'Save ' : 'Save & Next'}
             buttonStyle={[
               DefaultStyle.btnDanger,
               {

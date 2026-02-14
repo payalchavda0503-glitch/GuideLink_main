@@ -1,7 +1,7 @@
 import {useFocusEffect} from '@react-navigation/native';
 import {Button} from '@rneui/themed';
 import React, {useCallback, useState} from 'react';
-import {ScrollView, TextInput, View} from 'react-native';
+import {ScrollView, Text, TextInput, View} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import AppHeader from '../../../component/AppHeader';
 import AppIcons from '../../../component/AppIcons';
@@ -27,6 +27,7 @@ const LinkSocialProfileIndex = ({navigation}) => {
   const [Linkedin, setLinkedin] = useState('');
   const [youtube, setYoutube] = useState('');
   const [tiktok, setTiktok] = useState('');
+  const [xLink, setXLink] = useState('');
 
   const profieSave = async () => {
     try {
@@ -36,6 +37,7 @@ const LinkSocialProfileIndex = ({navigation}) => {
       formdata.append('instagram', insta);
       formdata.append('youtube', youtube);
       formdata.append('tiktok', tiktok);
+      formdata.append('x_link', xLink ?? '');
       //console.log(formdata);
 
       setLoaderVisible(true);
@@ -92,6 +94,8 @@ const LinkSocialProfileIndex = ({navigation}) => {
             setTiktok(result.tiktok_link);
           }
         }
+
+        setXLink(result.x_link != null && result.x_link !== 'null' ? String(result.x_link) : '');
         setLoaderVisible(false);
       }
     } catch (error) {
@@ -130,7 +134,7 @@ const LinkSocialProfileIndex = ({navigation}) => {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{paddingBottom: 24}}>
           <LoaderV2 loaderVisible={loaderVisible}>
-            <View style={{paddingHorizontal: 20, marginVertical: 40}}>
+            <View style={{paddingHorizontal: 15, marginVertical: 10}}>
               <View style={{alignContent: 'center'}}>
                 <View style={styles.input}>
                   <LinearGradient
@@ -151,15 +155,20 @@ const LinkSocialProfileIndex = ({navigation}) => {
                     />
                   </LinearGradient>
 
-                  <TextInput
-                    style={styles.socialInput1}
-                    placeholderTextColor={COLORS.gray}
-                    value={insta}
-                    onChangeText={text => setInsta(text)}
-                    keyboardType="default"
-                    placeholder="Instagram (Type URL)"
-                  />
+                  <View style={{flex: 1, alignSelf: 'stretch',paddingTop:2}}>
+                    <Text style={{fontSize: 15, color: COLORS.black, fontWeight: '600', marginLeft: 33}}>Instagram</Text>
+                  
+                  </View>
                 </View>
+                <Text style={{fontSize: 12, color: COLORS.gray, marginBottom: 4, alignSelf: 'stretch'}}>ex. - https://instagram.com/yourusername</Text>
+                    <TextInput
+                      style={[styles.socialInput1, {borderWidth: 1, borderColor: COLORS.gray, borderRadius: 8, paddingVertical: 8, backgroundColor: COLORS.white2 || '#F5F5F5', width: '100%', alignSelf: 'stretch'}]}
+                      placeholderTextColor={COLORS.gray}
+                      value={insta}
+                      onChangeText={text => setInsta(text)}
+                      keyboardType="default"
+                      placeholder="Enter URL"
+                    />
 
                 <View style={styles.input}>
                   <View
@@ -178,16 +187,20 @@ const LinkSocialProfileIndex = ({navigation}) => {
                       color={COLORS.white}
                     />
                   </View>
-                  <TextInput
-                    style={styles.socialInput1}
-                    placeholderTextColor={COLORS.gray}
-                    value={fb}
-                    onChangeText={text => setFb(text)}
-                    keyboardType="default"
-                    placeholder="Facebook (Type URL)"
-                  />
+                  <View style={{flex: 1, alignSelf: 'stretch',paddingTop:2}}>
+                    <Text style={{fontSize: 15, color: COLORS.black, fontWeight: '600',  marginLeft: 33}}>Facebook</Text>
+                  
+                  </View>
                 </View>
-
+                <Text style={{fontSize: 12, color: COLORS.gray, marginBottom: 4, alignSelf: 'stretch'}}>ex. - https://facebook.com/yourusername</Text>
+                    <TextInput
+                      style={[styles.socialInput1, {borderWidth: 1, borderColor: COLORS.gray, borderRadius: 8, paddingVertical: 8, backgroundColor: COLORS.white2 || '#F5F5F5', width: '100%', alignSelf: 'stretch'}]}
+                      placeholderTextColor={COLORS.gray}
+                      value={fb}
+                      onChangeText={text => setFb(text)}
+                      keyboardType="default"
+                      placeholder="Enter URL"
+                    />
                 <View style={styles.input}>
                   <View
                     style={[
@@ -206,16 +219,20 @@ const LinkSocialProfileIndex = ({navigation}) => {
                       color={COLORS.white}
                     />
                   </View>
-                  <TextInput
-                    style={styles.socialInput1}
-                    placeholderTextColor={COLORS.gray}
-                    value={Linkedin}
-                    onChangeText={text => setLinkedin(text)}
-                    keyboardType="default"
-                    placeholder="Linkedin (Type URL)"
-                  />
+                  <View style={{flex: 1, alignSelf: 'stretch',paddingTop:2}}>
+                    <Text style={{fontSize: 15, color: COLORS.black, fontWeight: '600', marginLeft: 33}}>LinkedIn</Text>
+                   
+                  </View>
                 </View>
-
+                <Text style={{fontSize: 12, color: COLORS.gray, marginBottom: 4, alignSelf: 'stretch'}}>ex. - https://linkedin.com/in/yourusername</Text>
+                    <TextInput
+                      style={[styles.socialInput1, {borderWidth: 1, borderColor: COLORS.gray, borderRadius: 8, paddingVertical: 8, backgroundColor: COLORS.white2 || '#F5F5F5', width: '100%', alignSelf: 'stretch'}]}
+                      placeholderTextColor={COLORS.gray}
+                      value={Linkedin}
+                      onChangeText={text => setLinkedin(text)}
+                      keyboardType="default"
+                      placeholder="Enter URL"
+                    />
                 <View style={styles.input}>
                   <View
                     style={[
@@ -234,15 +251,20 @@ const LinkSocialProfileIndex = ({navigation}) => {
                       color={COLORS.white}
                     />
                   </View>
-                  <TextInput
-                    style={styles.socialInput1}
-                    placeholderTextColor={COLORS.gray}
-                    value={tiktok}
-                    onChangeText={text => setTiktok(text)}
-                    keyboardType="default"
-                    placeholder="Tiktok (Type URL)"
-                  />
+                  <View style={{flex: 1, alignSelf: 'stretch',paddingTop:2}}>
+                    <Text style={{fontSize: 15, color: COLORS.black, fontWeight: '600',  marginLeft: 33}}>TikTok</Text>
+                  
+                  </View>
                 </View>
+                <Text style={{fontSize: 12, color: COLORS.gray, marginBottom: 4, alignSelf: 'stretch'}}>ex. - https://tiktok.com/@yourusername</Text>
+                    <TextInput
+                      style={[styles.socialInput1, {borderWidth: 1, borderColor: COLORS.gray, borderRadius: 8, paddingVertical: 8, backgroundColor: COLORS.white2 || '#F5F5F5', width: '100%', alignSelf: 'stretch'}]}
+                      placeholderTextColor={COLORS.gray}
+                      value={tiktok}
+                      onChangeText={text => setTiktok(text)}
+                      keyboardType="default"
+                      placeholder="Enter URL"
+                    />
               </View>
 
               <View style={styles.input}>
@@ -263,25 +285,63 @@ const LinkSocialProfileIndex = ({navigation}) => {
                     color={COLORS.white}
                   />
                 </View>
-                <TextInput
-                  style={styles.socialInput1}
-                  placeholderTextColor={COLORS.gray}
-                  value={youtube}
-                  onChangeText={text => setYoutube(text)}
-                  keyboardType="default"
-                  placeholder="Youtube (Type URL)"
-                />
+                <View style={{flex: 1, alignSelf: 'stretch',paddingTop:2}}>
+                  <Text style={{fontSize: 15, color: COLORS.black, fontWeight: '600',  marginLeft: 33}}>YouTube</Text>
+                  
+                </View>
               </View>
-
+              <Text style={{fontSize: 12, color: COLORS.gray, marginBottom: 4, alignSelf: 'stretch'}}>ex. - https://youtube.com/@yourusername</Text>
+                  <TextInput
+                    style={[styles.socialInput1, {borderWidth: 1, borderColor: COLORS.gray, borderRadius: 8, paddingVertical: 8, backgroundColor: COLORS.white2 || '#F5F5F5', width: '100%', alignSelf: 'stretch'}]}
+                    placeholderTextColor={COLORS.gray}
+                    value={youtube}
+                    onChangeText={text => setYoutube(text)}
+                    keyboardType="default"
+                    placeholder="Enter URL"
+                  />
+              <View style={styles.input}>
+                <View
+                  style={[
+                    styles.circlelinkedin,
+                    {
+                      backgroundColor: COLORS.black,
+                      marginStart: 0,
+                      width: 25,
+                      height: 25,
+                    },
+                  ]}>
+                  <AppIcons
+                    type={'FontAwesome'}
+                    name={'twitter'}
+                    size={18}
+                    color={COLORS.white}
+                  />
+                </View>
+                <View style={{flex: 1, alignSelf: 'stretch', paddingTop: 2}}>
+                  <Text style={{fontSize: 15, color: COLORS.black, fontWeight: '600', marginLeft: 33}}>X (Twitter)</Text>
+                </View>
+              </View>
+              <Text style={{fontSize: 12, color: COLORS.gray, marginBottom: 4, alignSelf: 'stretch'}}>ex. - https://twitter.com/yourusername</Text>
+              <TextInput
+                style={[styles.socialInput1, {borderWidth: 1, borderColor: COLORS.gray, borderRadius: 8, paddingVertical: 8, backgroundColor: COLORS.white2 || '#F5F5F5', width: '100%', alignSelf: 'stretch'}]}
+                placeholderTextColor={COLORS.gray}
+                value={xLink ?? ''}
+                onChangeText={text => setXLink(text)}
+                keyboardType="default"
+                placeholder="Enter URL"
+              />
               <Button
                 title="Save"
                 buttonStyle={[
                   DefaultStyle.btnDanger,
                   {
-                    marginTop: 10,
+                    marginTop: 20,
                     marginBottom: 10,
                     backgroundColor: COLORS.primary,
-                    paddingHorizontal: 40,
+                    paddingHorizontal: 56,
+                    paddingVertical: 14,
+                    borderRadius: 12,
+                    alignSelf: 'center',
                   },
                 ]}
                 onPress={profieSave}

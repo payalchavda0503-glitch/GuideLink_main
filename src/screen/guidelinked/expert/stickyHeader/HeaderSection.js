@@ -10,6 +10,7 @@ import {
   View,
   Image,
 } from 'react-native';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import FastImage from 'react-native-fast-image';
 import LinearGradient from 'react-native-linear-gradient';
 import AppIcons from '../../../../component/AppIcons';
@@ -127,6 +128,40 @@ const HeaderSection = ({dataList, onScrollDown, onBookAppointment}) => {
                   color={COLORS.primary}
                 />
               </Pressable>
+            )}
+            {(dataList.is_featured === 1 || dataList.is_featured === '1') && (
+              <View
+                style={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: 10,
+                  backgroundColor: COLORS.orange,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginLeft: 6,
+                  elevation: 3,
+                  shadowColor: COLORS.black,
+                  shadowOffset: {width: 0, height: 1},
+                  shadowOpacity: 0.3,
+                  shadowRadius: 2,
+                }}>
+                <View
+                  style={{
+                    opacity: 0.9,
+                    elevation: 2,
+                    shadowColor: COLORS.Yellow,
+                    shadowOffset: {width: 0, height: 0},
+                    shadowOpacity: 0.5,
+                    shadowRadius: 1,
+                  }}>
+                  <FontAwesome5
+                    name="star"
+                    size={11}
+                    color={COLORS.Yellow}
+                    solid
+                  />
+                </View>
+              </View>
             )}
             <Text style={[styles.name, {fontSize: 11, marginLeft: 5}]}>
               {` - ${dataList.country_name}`}

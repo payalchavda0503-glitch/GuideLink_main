@@ -25,10 +25,8 @@ import DeviceInfo from 'react-native-device-info';
 import RNFS from 'react-native-fs';
 import ImageCropPicker from 'react-native-image-crop-picker';
 import Share from 'react-native-share';
-import ic_email from '../../../../assets/images/ic-mail.png';
 import ic_earning from '../../../../assets/images/ic_earning.png';
 import ic_verify from '../../../../assets/images/ic_verify.png';
-import ic_work from '../../../../assets/images/ic_work.png';
 import ic_logout from '../../../../assets/images/logout.png';
 import ic_my_bookings from '../../../../assets/images/my-bookings.png';
 import profile from '../../../../assets/images/profile.png';
@@ -65,6 +63,7 @@ const CustomDrawer = () => {
   const token = useSelector(s => s.AuthSlice.token);
   const [logo, setLogo] = useState('');
   const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [userId, setUserId] = useState(-1);
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -126,7 +125,14 @@ const CustomDrawer = () => {
       type: 'MaterialCommunityIcons',
       isVector: true,
     },
- 
+    {
+      id: '4',
+      img: 'setting',
+      type: 'AntDesign',
+      title: 'My Profile',
+      navigate: 'AccountSetting',
+      isVector: true,
+    },
     {
       id: '18',
       isBecome: isGuide == '-1' ? false : true,
@@ -171,7 +177,7 @@ const CustomDrawer = () => {
     {
       id: 'all-bookings',
       img: 'calendar',
-      title: 'All Bookings',
+      title: 'Bookings',
       navigate: 'BookingTabIndex',
       type: 'Feather',
       isVector: true,
@@ -179,7 +185,7 @@ const CustomDrawer = () => {
     {
       id: '2',
       img: 'sharealt',
-      title: 'Invite Friends',
+      title: 'Share Public URL',
       navigate: 'Share',
       type: 'AntDesign',
       isVector: true,
@@ -192,14 +198,7 @@ const CustomDrawer = () => {
       navigate: 'LinkSocialProfileIndex',
       isVector: true,
     },
-    {
-      id: '4',
-      img: 'setting',
-      type: 'AntDesign',
-      title: 'Account Details',
-      navigate: 'AccountSetting',
-      isVector: true,
-    },
+   
     {
       id: '5',
       img: 'password',
@@ -207,37 +206,6 @@ const CustomDrawer = () => {
       title: 'Change Password',
       navigate: 'ChangePasswordIndex',
       isVector: true,
-    },
-
-    {
-      id: '6',
-      img: ic_email,
-      title: 'Contact Us / Feedback',
-      navigate: 'ContactTabIndex',
-      isVector: false,
-    },
-    {
-      id: '8',
-      img: ic_work,
-      title: 'FAQs',
-      navigate: 'FAQScreen',
-      isVector: false,
-    },
-    {
-      id: 'privacy-policy',
-      img: 'shield',
-      title: 'Privacy Policy',
-      type: 'Feather',
-      isVector: true,
-      openUrl: 'https://guidelinked.com/privacy-policy',
-    },
-    {
-      id: 'terms-conditions',
-      img: 'file-text',
-      title: 'Terms and Conditions',
-      type: 'Feather',
-      isVector: true,
-      openUrl: 'https://guidelinked.com/terms-of-use',
     },
     {
       id: '9',
@@ -373,6 +341,7 @@ const CustomDrawer = () => {
         setUserId(result.id);
         setGuideStatus(result.stripe_onboarding_status);
         setName(result.fullname);
+        setUsername(result.username != null && result.username !== 'null' ? String(result.username) : '');
         setEmail(result.email);
         setPhone(result.phone_number);
         setLogo(result.image_url);
@@ -384,12 +353,20 @@ const CustomDrawer = () => {
   };
 
   const onShare = async () => {
+    const profileUrl =
+      username && username.trim()
+        ? `https://guidelinked.com/expert/${encodeURIComponent(username.trim())}`
+        : 'https://guidelinked.com';
     const message =
-      'Hey, download the GuideLinked app and create an account! You can make money by sharing your experiences / expertise with someone and vice versa.\n\nWebsite: https://guidelinked.com\n\nAndroid: https://play.google.com/store/apps/details?id=com.guidelinked\nApple: https://apps.apple.com';
+      ' Hey, download the GuideLinked app and create an account! You can make money by sharing your experiences / expertise with someone and vice versa.\n\n' +
+      'Website: https://guidelinked.com\n' +
+      `My profile: ${profileUrl}\n\n` +
+      'Android: https://play.google.com/store/apps/details?id=com.guidelinked\n' +
+      'Apple: https://apps.apple.com';
 
     try {
       const shareOptions = {
-        title: 'Invite Friends',
+        title: 'Share Public URL',
         message,
       };
 
@@ -590,6 +567,53 @@ const CustomDrawer = () => {
     );
   };
 
+  const linkStyle = {
+    color: COLORS.primary,
+    fontSize: 14,
+  };
+
+  const renderFooter = () => (
+    <>
+      <View
+        style={{
+          paddingVertical: 16,
+          paddingHorizontal: 16,
+          borderTopWidth: 1,
+          borderTopColor: '#e0e0e0',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+        <View style={{flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', marginBottom: 8}}>
+          <Pressable
+            onPress={() => navigation.navigate('FAQScreen')}
+            style={{paddingVertical: 4, paddingEnd: 4}}>
+            <Text style={linkStyle}>FAQs</Text>
+          </Pressable>
+          <Text style={[linkStyle, {marginHorizontal: 4}]}>|</Text>
+          <Pressable
+            onPress={() => navigation.navigate('ContactTabIndex')}
+            style={{paddingVertical: 4, paddingEnd: 4}}>
+            <Text style={linkStyle}>Contact Us</Text>
+          </Pressable>
+        </View>
+        <View style={{flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center'}}>
+          <Pressable
+            onPress={() => Linking.openURL('https://guidelinked.com/terms-of-use')}
+            style={{paddingVertical: 4, paddingEnd: 4}}>
+            <Text style={linkStyle}>Terms of Use</Text>
+          </Pressable>
+          <Text style={[linkStyle, {marginHorizontal: 4}]}>|</Text>
+          <Pressable
+            onPress={() => Linking.openURL('https://guidelinked.com/privacy-policy')}
+            style={{paddingVertical: 4, paddingEnd: 4}}>
+            <Text style={linkStyle}>Privacy Policy</Text>
+          </Pressable>
+        </View>
+      </View>
+      <Text style={styles.version}>Version {gradleVersion}</Text>
+    </>
+  );
+
   return (
     <SafeAreaView style={{flex: 1}}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -598,9 +622,9 @@ const CustomDrawer = () => {
           renderItem={renderItem}
           ItemSeparatorComponent={Divider}
           ListHeaderComponent={renderHeader}
+          ListFooterComponent={renderFooter}
           keyExtractor={item => item.id}
         />
-        <Text style={styles.version}>Version {gradleVersion}</Text>
       </ScrollView>
 
       <CustomLogoutDialog

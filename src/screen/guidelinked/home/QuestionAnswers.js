@@ -143,7 +143,7 @@ const QuestionAnswers = ({navigation}) => {
     const content = desc ? `${title}\n\n${desc}` : title;
     const u = raw.user ?? raw.userdata ?? {};
     const userName =
-      u.full_name ?? u.fullname ?? u.username ?? u.name ?? raw.user_name ?? 'User';
+      u.full_name ?? u.fullname ?? u.name ?? u.username ?? raw.user_name ?? 'User';
     const userAvatar =
       (u.profile_image && String(u.profile_image).trim()) || u.image_url || null;
     const arr = x => (Array.isArray(x) ? x : []);
@@ -208,7 +208,7 @@ const QuestionAnswers = ({navigation}) => {
           a.time_ago ||
           '',
         userName:
-          au.full_name ?? au.fullname ?? au.username ?? au.name ?? 'User',
+          au.full_name ?? au.fullname ?? au.name ?? au.username ?? 'User',
         userAvatar:
           (au.profile_image && String(au.profile_image).trim()) ||
           au.image_url ||
@@ -329,7 +329,7 @@ const QuestionAnswers = ({navigation}) => {
           a.time_ago ||
           '',
         userName:
-          au.full_name ?? au.fullname ?? au.username ?? au.name ?? 'User',
+          au.full_name ?? au.fullname ?? au.name ?? au.username ?? 'User',
         userAvatar:
           (au.profile_image && String(au.profile_image).trim()) ||
           au.image_url ||

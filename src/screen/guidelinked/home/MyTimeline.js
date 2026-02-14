@@ -144,6 +144,21 @@ const MyTimeline = ({navigation}) => {
     return v.startsWith('/') ? `${base}${v}` : `${base}/${v}`;
   };
 
+  const getAvatarUrl = (u, rawFallback = null) => {
+    const r = rawFallback ?? {};
+    const keys = ['image_url', 'profile_image', 'image', 'profile_picture', 'avatar', 'profile_pic', 'user_image'];
+    let v = null;
+    for (const k of keys) {
+      v = u?.[k] ?? r?.[k];
+      if (v != null && typeof v === 'string' && v.trim()) break;
+    }
+    if (!v || typeof v !== 'string' || !v.trim()) return null;
+    v = v.trim();
+    if (v.startsWith('http://') || v.startsWith('https://')) return v;
+    const base = (WEB_URL || '').replace(/\/$/, '');
+    return v.startsWith('/') ? `${base}${v}` : `${base}/${v}`;
+  };
+
   const fetchMyPosts = async () => {
     try {
       const res = await Api.get(API_TIMELINE_POST_GET_MY_POSTS);
@@ -165,13 +180,13 @@ const MyTimeline = ({navigation}) => {
     const images = attachments.map(getAttachmentUrl).filter(Boolean);
     const likesData = arr(raw.likesData);
     const likedBy = likesData.map(
-      x => x.full_name ?? x.fullname ?? x.username ?? x.name ?? 'User',
+      x => x.full_name ?? x.fullname ?? x.name ?? x.username ?? 'User',
     );
     return {
       id: raw.id ?? raw.post_id,
       userId: raw.user_id ?? u.user_id ?? u.id,
-      userName: (u.full_name ?? u.fullname ?? u.username ?? u.name ?? raw.user_name) || 'User',
-      userAvatar: (u.profile_image && String(u.profile_image).trim()) || u.image_url || null,
+      userName: (u.full_name ?? u.fullname ?? u.name ?? u.username ?? raw.user_name) || 'User',
+      userAvatar: getAvatarUrl(u, raw) || null,
       action: raw.action ?? (raw.type === 'question' ? 'Asked a question' : 'Added a post'),
       timeAgo: raw.created_post ?? raw.time_ago ?? raw.created_at ?? '',
       content: raw.content ?? raw.description ?? raw.text ?? '',
@@ -322,8 +337,8 @@ const MyTimeline = ({navigation}) => {
   const mapLikeUserFromApi = (raw) => {
     const u = raw?.user ?? raw?.userdata ?? raw ?? {};
     const id = u.user_id ?? u.id ?? raw?.user_id ?? raw?.id ?? null;
-    const name = u.full_name ?? u.fullname ?? u.username ?? u.name ?? raw?.full_name ?? raw?.username ?? 'User';
-    const avatar = (u.profile_image && String(u.profile_image).trim()) || (u.image_url ?? raw?.image_url ?? null);
+    const name = u.full_name ?? u.fullname ?? u.name ?? u.username ?? raw?.full_name ?? raw?.name ?? raw?.username ?? 'User';
+    const avatar = getAvatarUrl(u, raw) || null;
     return {id, name, avatar};
   };
 
@@ -449,9 +464,8 @@ const MyTimeline = ({navigation}) => {
         price: Number.isFinite(price) ? price : 49,
         timeAgo:
           (a.formated_created_at ?? a.answer_created_at ?? a.created_at) || a.time_ago || '',
-        userName: au.full_name ?? au.fullname ?? au.username ?? au.name ?? 'User',
-        userAvatar:
-          (au.profile_image && String(au.profile_image).trim()) || au.image_url || null,
+        userName: au.full_name ?? au.fullname ?? au.name ?? au.username ?? 'User',
+        userAvatar: getAvatarUrl(au, a) || null,
         isPaid: isPaidAnswer(a),
         answerUserId,
         answerId,
@@ -659,8 +673,8 @@ const MyTimeline = ({navigation}) => {
     return {
       id,
       parentId: resolvedParent,
-      userName: raw.user_name ?? raw.userName ?? raw.user?.full_name ?? raw.user?.username ?? 'User',
-      userAvatar: raw.user_avatar ?? raw.userAvatar ?? raw.user?.image_url ?? raw.user?.profile_image ?? null,
+      userName: raw.user_name ?? raw.userName ?? raw.user?.full_name ?? raw.user?.name ?? raw.user?.username ?? 'User',
+      userAvatar: (getAvatarUrl(raw.user ?? raw, raw) || (raw.user_avatar ?? raw.userAvatar ?? null)),
       text: raw.comment ?? raw.text ?? raw.content ?? '',
       timeAgo:raw.formated_created_at ?? raw.created_comment ?? raw.created_post ?? raw.time_ago ?? raw.created_at ?? raw.createdAt ?? '',
       likes: raw.likes ?? raw.likes_count ?? 0,
@@ -869,9 +883,8 @@ const MyTimeline = ({navigation}) => {
     const content = desc ? `${title}\n\n${desc}` : title;
     const u = raw.user ?? raw.userdata ?? {};
     const userName =
-      u.full_name ?? u.fullname ?? u.username ?? u.name ?? raw.user_name ?? 'User';
-    const userAvatar =
-      (u.profile_image && String(u.profile_image).trim()) || u.image_url || null;
+      u.full_name ?? u.fullname ?? u.name ?? u.username ?? raw.user_name ?? 'User';
+    const userAvatar = getAvatarUrl(u, raw) || null;
     const arr = x => (Array.isArray(x) ? x : []);
     const isPaidAnswer = a =>
       a.is_paid === 1 ||
@@ -920,9 +933,8 @@ const MyTimeline = ({navigation}) => {
         price: Number.isFinite(price) ? price : 49,
         timeAgo:
           (a.formated_created_at ?? a.answer_created_at ?? a.created_at) || a.time_ago || '',
-        userName: au.full_name ?? au.fullname ?? au.username ?? au.name ?? 'User',
-        userAvatar:
-          (au.profile_image && String(au.profile_image).trim()) || au.image_url || null,
+        userName: au.full_name ?? au.fullname ?? au.name ?? au.username ?? 'User',
+        userAvatar: getAvatarUrl(au, a) || null,
         isPaid: isPaidAnswer(a),
         answerUserId,
         answerId,
@@ -2405,7 +2417,7 @@ const styles = StyleSheet.create({
   engagementIconsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 20,
+    gap: 12,
   },
   engagementIconBtn: {
     paddingVertical: 4,

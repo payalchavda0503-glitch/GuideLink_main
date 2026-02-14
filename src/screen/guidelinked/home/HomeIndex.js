@@ -25,6 +25,7 @@ import Api from '../../../service/Api';
 import {
   API_CATEGORY_LIST,
   API_GET_DASHBOARD,
+  API_GET_PROFILE,
   API_LATEST_USER,
   API_NOTIFICATION,
   API_UPDATE_FCB,
@@ -63,6 +64,7 @@ const HomeIndex = ({navigation}) => {
   const flatListRef = useRef(null);
   const flatListDataLengthRef = useRef(0);
   const [isGuide, setIsGuide] = useState(0);
+  const [guideStatusLoaded, setGuideStatusLoaded] = useState(false);
 
   const [isFilterVisible, setFilterVisible] = useState(false);
 
@@ -162,8 +164,10 @@ const HomeIndex = ({navigation}) => {
 
         if (Number(result?.current_page) === 1) {
           setList(result.data || []);
+          console.log('[Home] Full list (page 1):', JSON.stringify(result.data || [], null, 2));
         } else {
           setList(prev => [...prev, ...(result.data || [])]);
+          console.log('[Home] Appended page data:', JSON.stringify(result.data || [], null, 2));
         }
         return true;
       }
@@ -241,13 +245,31 @@ const HomeIndex = ({navigation}) => {
       updateFcm();
       getData();
       fetchCategories();
-      const fetchUserId = async () => {
-        setTimeout(async () => {
+      setGuideStatusLoaded(false);
+      const fetchGuideStatus = async () => {
+        try {
+          const response = await Api.get(API_GET_PROFILE);
+          if (response?.status === 'RC200' && response?.data != null) {
+            const status = response.data.stripe_onboarding_status;
+            const value = status != null ? String(status) : '';
+            setIsGuide(value);
+            await AsyncStorage.setItem('isGuide', value);
+            setGuideStatusLoaded(true);
+            return;
+          }
+        } catch (e) {
+          // Profile API failed (e.g. not logged in); fall back to AsyncStorage
+        }
+        try {
           const guideFlag = await AsyncStorage.getItem('isGuide');
-          setIsGuide(guideFlag);
-        }, 2000);
+          setIsGuide(guideFlag ?? '');
+        } catch (e) {
+          setIsGuide('');
+        } finally {
+          setGuideStatusLoaded(true);
+        }
       };
-      fetchUserId();
+      fetchGuideStatus();
     }, [fetchCategories]),
   );
 
@@ -320,6 +342,12 @@ const HomeIndex = ({navigation}) => {
 
   flatListDataLengthRef.current = flatListData.length;
 
+  useEffect(() => {
+    if (list && list.length > 0) {
+      console.log('[Home] Full guides list (count:', list.length, '):', list);
+    }
+  }, [list]);
+
   // Render different list items
   const renderItem = ({item}) => {
     switch (item.type) {
@@ -376,7 +404,13 @@ const HomeIndex = ({navigation}) => {
               })}
             </ScrollView>
             {(() => {
-              const isGuideUser = Number(isGuide) >= 1 || isGuide === '1' || isGuide === '2';
+              if (loaderVisible) return null;
+              if (!guideStatusLoaded) return null;
+              const isGuideUser =
+                isGuide === '1' ||
+                isGuide === 1 ||
+                Number(isGuide) >= 1 ||
+                (isGuide != null && isGuide !== '' && isGuide !== '-1' && isGuide !== '0' && Number(isGuide) !== 0);
               if (isGuideUser) return null;
               return (
                 <View style={newStyles.allGuidesSearchRow}>

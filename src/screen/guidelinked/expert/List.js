@@ -1,5 +1,6 @@
 import React from 'react';
 import {Image, Linking, Pressable, Text, View} from 'react-native';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import LinearGradient from 'react-native-linear-gradient';
 import AppIcons from '../../../component/AppIcons';
 import CustomRating from '../../../component/CustomRating ';
@@ -111,12 +112,48 @@ const List = ({
                 />
               </Pressable>
             )}
-            {primaryCategoryTitle && (
-              <View style={[styles.categoryPill, {marginLeft: 8}]}>
-                <Text style={styles.categoryPillText}>{primaryCategoryTitle}</Text>
+            {(item.is_featured === 1 || item.is_featured === '1') && (
+              <View
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: 10,
+                  backgroundColor: COLORS.orange,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginLeft: 6,
+                  elevation: 3,
+                  shadowColor: COLORS.black,
+                  shadowOffset: {width: 0, height: 1},
+                  shadowOpacity: 0.3,
+                  shadowRadius: 2,
+                }}>
+                <View
+                  style={{
+                    opacity: 0.9,
+                    elevation: 12,
+                    shadowColor: COLORS.Yellow,
+                    shadowOffset: {width: 0, height: 0},
+                    shadowOpacity: 1,
+                    shadowRadius: 1,
+                  }}>
+                  <FontAwesome5
+                    name="star"
+                    size={10}
+                    color={COLORS.Yellow}
+                    style={{elevation:10}}
+                    solid
+                  />
+                </View>
               </View>
             )}
           </View>
+
+          {primaryCategoryTitle ? (
+            <View style={[styles.categoryPill, {marginTop: 2, marginBottom: 4, alignSelf: 'flex-start'}]}>
+              <Text style={styles.categoryPillText}>{primaryCategoryTitle}</Text>
+            </View>
+          ) : null}
 
           {item.avg_rating > 0 && (
             <View style={DefaultStyle.flexDirection}>

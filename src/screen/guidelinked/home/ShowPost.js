@@ -123,6 +123,21 @@ const ShowPost = ({navigation}) => {
     return v.startsWith('/') ? `${base}${v}` : `${base}/${v}`;
   };
 
+  const getAvatarUrl = (u, rawFallback = null) => {
+    const r = rawFallback ?? {};
+    const keys = ['image_url', 'profile_image', 'image', 'profile_picture', 'avatar', 'profile_pic', 'user_image'];
+    let v = null;
+    for (const k of keys) {
+      v = u?.[k] ?? r?.[k];
+      if (v != null && typeof v === 'string' && v.trim()) break;
+    }
+    if (!v || typeof v !== 'string' || !v.trim()) return null;
+    v = v.trim();
+    if (v.startsWith('http://') || v.startsWith('https://')) return v;
+    const base = (WEB_URL || '').replace(/\/$/, '');
+    return v.startsWith('/') ? `${base}${v}` : `${base}/${v}`;
+  };
+
   const mapPostFromApi = raw => {
     const arr = x => (Array.isArray(x) ? x : []);
     const attachments = arr(raw.attachments || raw.images);
@@ -138,8 +153,7 @@ const ShowPost = ({navigation}) => {
     const userName =
       (u.full_name ?? u.fullname ?? u.username ?? u.name ?? raw.user_name) ||
       'User';
-    const userAvatar =
-      (u.profile_image && String(u.profile_image).trim()) || u.image_url || null;
+    const userAvatar = getAvatarUrl(u, raw) || null;
     const likesData = arr(raw.likesData);
     const likedBy = likesData.map(
       x => x.full_name ?? x.fullname ?? x.username ?? x.name ?? 'User',
@@ -386,11 +400,7 @@ const ShowPost = ({navigation}) => {
       raw?.full_name ??
       raw?.username ??
       'User';
-    const avatar =
-      (u.profile_image && String(u.profile_image).trim()) ||
-      u.image_url ||
-      raw?.image_url ||
-      null;
+    const avatar = getAvatarUrl(u, raw) || null;
     return {id, name, avatar};
   };
 
@@ -575,11 +585,7 @@ const ShowPost = ({navigation}) => {
         raw.user?.username ??
         'User',
       userAvatar:
-        raw.user_avatar ??
-        raw.userAvatar ??
-        raw.user?.image_url ??
-        raw.user?.profile_image ??
-        null,
+        getAvatarUrl(raw.user ?? raw, raw) || (raw.user_avatar ?? raw.userAvatar ?? null),
       text: raw.comment ?? raw.text ?? raw.content ?? '',
       timeAgo:
         raw.formated_created_at ??
