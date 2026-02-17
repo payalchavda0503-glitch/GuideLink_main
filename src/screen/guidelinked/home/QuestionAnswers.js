@@ -849,7 +849,7 @@ const QuestionAnswers = ({navigation}) => {
                                   })
                                 }>
                                 <Text style={styles.bookGuideButtonText}>
-                                  Book Guide
+                                  Book this guide
                                 </Text>
                               </TouchableOpacity>
                             )}
@@ -1356,15 +1356,15 @@ const styles = StyleSheet.create({
   bookGuideButton: {
     marginTop: 10,
     alignSelf: 'flex-start',
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 20,
-    backgroundColor: COLORS.primary,
+    paddingVertical: 4,
+    paddingHorizontal: 0,
+    backgroundColor: 'transparent',
   },
   bookGuideButtonText: {
-    color: COLORS.white,
-    fontSize: 13,
-    fontWeight: '600',
+    color: COLORS.primary,
+    fontSize: 14,
+    fontWeight: '500',
+    textDecorationLine: 'underline',
   },
   premiumBadge: {
     flexDirection: 'row',

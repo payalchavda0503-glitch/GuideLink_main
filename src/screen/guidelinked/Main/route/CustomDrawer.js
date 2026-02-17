@@ -10,6 +10,7 @@ import {
   Linking,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -397,18 +398,21 @@ const CustomDrawer = () => {
             ]}>
             <Pressable onPress={IMGPickerDialog}>
               <View
-                style={{
-                  borderRadius: 100,
-                  width: 60,
-                  height: 60,
-                }}>
+                style={[
+                  styles.profileLogo,
+                  {
+                    overflow: 'hidden',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  },
+                ]}>
                 {logo.split('.').pop() === 'svg' ? (
-                  <SvgUri width={59} height={59} uri={logo} />
+                  <SvgUri width={60} height={60} uri={logo} />
                 ) : (
                   <Image
                     source={logo ? {uri: logo} : imgProfile}
-                    style={styles.profileLogo}
-                    resizeMode="contain"
+                    style={StyleSheet.absoluteFillObject}
+                    resizeMode="cover"
                   />
                 )}
               </View>

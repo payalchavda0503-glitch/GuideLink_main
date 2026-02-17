@@ -28,5 +28,24 @@ allprojects {
     }
 }
 
+subprojects { subproject ->
+    subproject.afterEvaluate {
+        def android = subproject.extensions.findByName('android')
+        if (android != null && android.defaultConfig != null) {
+            def externalNativeBuild = android.defaultConfig.externalNativeBuild
+            if (externalNativeBuild != null && externalNativeBuild.cmake != null) {
+                def args = externalNativeBuild.cmake.arguments
+                if (args != null && !args.any { it?.toString()?.startsWith('-DCMAKE_SHARED_LINKER_FLAGS=') }) {
+                    args.addAll([
+                        '-DCMAKE_SHARED_LINKER_FLAGS=-Wl,-z,max-page-size=16384',
+                        '-DCMAKE_MODULE_LINKER_FLAGS=-Wl,-z,max-page-size=16384',
+                        '-DCMAKE_EXE_LINKER_FLAGS=-Wl,-z,max-page-size=16384'
+                    ])
+                }
+            }
+        }
+    }
+}
+
 
 apply plugin: "com.facebook.react.rootproject"

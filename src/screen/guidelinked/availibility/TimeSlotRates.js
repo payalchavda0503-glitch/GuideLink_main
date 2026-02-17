@@ -13,6 +13,8 @@ import Loader from '../../../util/Loader';
 import {COLORS} from '../../../util/Theme';
 import HelpVideoIcon from '../HelpVideoIcon';
 
+const MIN_PAID_ANSWER_RATE = 1.99;
+
 const TimeSlotRates = ({
   rates,
   setRates,
@@ -55,6 +57,15 @@ const TimeSlotRates = ({
   };
 
   const showPaidAnswerRateAlertPopup = () => {
+    const num = Number(currentPaidAnswerRate);
+    if (!Number.isFinite(num) || num < MIN_PAID_ANSWER_RATE) {
+      Alert.alert(
+        'Minimum rate required',
+        'Your paid answer rate must be at least $1.99 per question. Please enter $1.99 or more to continue.',
+        [{text: 'OK'}],
+      );
+      return;
+    }
     Alert.alert(
       'GuideLinked',
       'GuideLinked charges 30% fee from your Answer rate and will transfer the remaining amount to your payment account.',
@@ -120,10 +131,10 @@ const TimeSlotRates = ({
               fontSize: 16,
               fontWeight: 'bold',
             }}>
-            Time Slot Rate / 25 Mins
+            Rate / 25 Mins call
           </Text>
 
-          <HelpVideoIcon type={1} />
+          {/* <HelpVideoIcon type={1} /> */}
         </View>
         <Card.Divider style={{marginBottom: 0}} />
         <View>
@@ -213,7 +224,7 @@ const TimeSlotRates = ({
             Changes made to the Rate ($) will apply only to the bookings not
             made yet.
           </Text>
-          <Text
+          {/* <Text
             style={{
               paddingHorizontal: 10,
               paddingBottom: 10,
@@ -222,7 +233,7 @@ const TimeSlotRates = ({
             }}>
             GuideLinked charges 30% fee from your call rate and will transfer
             the remaining amount to your payment account.
-          </Text>
+          </Text> */}
         </View>
       </Card>
 
@@ -241,7 +252,7 @@ const TimeSlotRates = ({
               fontSize: 16,
               fontWeight: 'bold',
             }}>
-            Paid Answer Rate / Question
+           Paid Answer Rate
           </Text>
         </View>
         <Card.Divider style={{marginBottom: 0}} />
@@ -280,11 +291,11 @@ const TimeSlotRates = ({
                 ]}
                 keyboardType="decimal-pad"
                 placeholder="Rate"
-                maxLength={2}
+                maxLength={10}
                 value={currentPaidAnswerRate}
                 onChangeText={v => {
-                  // Allow 0-99
-                  if (/^\d{0,2}$/.test(v)) {
+                  // Allow decimal with at most 2 digits after the point (e.g. 10, 10.5, 99.99)
+                  if (/^\d*\.?\d{0,2}$/.test(v)) {
                     setCurrentPaidAnswerRate(v);
                   }
                 }}
@@ -305,7 +316,10 @@ const TimeSlotRates = ({
                   marginVertical: 0,
                 },
               ]}
-              disabled={currentPaidAnswerRate === ''}
+              disabled={
+                currentPaidAnswerRate === '' ||
+                Number(currentPaidAnswerRate) < MIN_PAID_ANSWER_RATE
+              }
               titleStyle={{color: COLORS.white}}
               onPress={() => showPaidAnswerRateAlertPopup()}
             />
@@ -318,8 +332,7 @@ const TimeSlotRates = ({
               fontSize: 12,
               color: COLORS.black,
             }}>
-            GuideLinked charges 30% fee from your Answer rate and will transfer the
-            remaining amount to your payment account..
+            Set your rate per question. Minimum is $1.99 (1 dollar and 99 cents).
           </Text>
         </View>
       </Card>

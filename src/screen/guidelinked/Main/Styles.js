@@ -43,9 +43,9 @@ export const styles = StyleSheet.create({
   profileLogo: {
     width: 60,
     height: 60,
-    borderRadius: 10,
+    borderRadius: 30,
     borderColor: COLORS.primary,
-    resizeMode: 'contain',
+    resizeMode: 'cover',
     backgroundColor: COLORS.graySolid,
     borderWidth: 1,
     overflow: 'hidden',

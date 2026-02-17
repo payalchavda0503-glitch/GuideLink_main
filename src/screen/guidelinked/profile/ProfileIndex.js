@@ -614,7 +614,7 @@ const ProfileIndex = ({navigation, route}) => {
                           DefaultStyle.blackBold,
                           {color: COLORS.primary},
                         ]}>
-                        What can I help with?
+                       What can I help with/ What am I looking for?
                       </Text>
                       {/* <AppIcons
                       type={'AntDesign'}
@@ -625,22 +625,22 @@ const ProfileIndex = ({navigation, route}) => {
                     </View>
                     {/* Please create your wisdom areas and expain why Users should contact you. */}
 
-                    <View
+                    {/* <View
                       style={{
                         marginBottom: 15,
                         marginTop: 5,
                         flexDirection: 'row',
-                      }}>
-                      <Text style={DefaultStyle.txtgray12}>
-                        Please create your wisdom areas.
+                      }}> */}
+                      {/* <Text style={DefaultStyle.txtgray12}>
+                        Please create your wisdom areas. */}
                         {/* <Text style={DefaultStyle.txtgray12bold}>
                             (Refer to questions listed under
                               <Text onPress={()=>{
                                 navigation.navigate('HelpVideos', {type:6})
                               }} style={[DefaultStyle.txtgray12bold,{textDecorationLine:'underline'}]}> guidance categories</Text>)
                           </Text> */}
-                      </Text>
-                    </View>
+                      {/* </Text> */}
+                    {/* </View> */}
 
                     {help.map((value, index) => (
                       <View key={value.id}>
@@ -650,7 +650,7 @@ const ProfileIndex = ({navigation, route}) => {
                               styles.inputCollege,
                               {flex: 1, marginEnd: 2},
                             ]}
-                            placeholder="Enter the wisdom you have.."
+                            placeholder="Enter your title"
                             placeholderTextColor={COLORS.gray}
                             value={value.question}
                             onChangeText={text => handleHelp(text, index)}
@@ -673,7 +673,7 @@ const ProfileIndex = ({navigation, route}) => {
                           numberOfLines={4}
                           maxLength={10000}
                           multiline={true}
-                          placeholder="Explain why.."
+                          placeholder="Enter your explanation"
                           textAlignVertical="top"
                           placeholderTextColor={COLORS.gray}
                           value={value.answer}

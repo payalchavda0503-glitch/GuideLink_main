@@ -1131,9 +1131,9 @@ const ShowPost = ({navigation}) => {
             ItemSeparatorComponent={() => <View style={styles.separator} />}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>No posts yet</Text>
+                <Text style={styles.emptyText}>No any feed available.</Text>
                 <Text style={styles.emptySubtext}>
-                  Be the first to share something!
+                Start with adding a feed.
                 </Text>
               </View>
             }

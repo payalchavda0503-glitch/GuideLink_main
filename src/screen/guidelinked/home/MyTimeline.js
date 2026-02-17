@@ -1567,7 +1567,7 @@ const MyTimeline = ({navigation}) => {
                                     })
                                   }>
                                   <Text style={styles.bookGuideButtonText}>
-                                    Book Guide
+                                    Book this guide
                                   </Text>
                                 </TouchableOpacity>
                               )}
@@ -1652,7 +1652,7 @@ const MyTimeline = ({navigation}) => {
   const ListEmpty = () => (
     <View style={styles.empty}>
       <Text style={styles.emptyText}>
-        {activeTab === 'my_post' && 'No posts yet'}
+        {activeTab === 'my_post' && 'No any feed available. Start with adding a feed.'}
         {activeTab === 'my_questions' && 'No questions yet'}
         {activeTab === 'my_answers' && 'No answers yet'}
       </Text>
@@ -1674,7 +1674,7 @@ const MyTimeline = ({navigation}) => {
 
         <View style={styles.tabs}>
           {[
-            {key: 'my_post', label: 'Post'},
+            {key: 'my_post', label: 'Feed'},
             {key: 'my_questions', label: 'Questions'},
             {key: 'my_answers', label: 'Answers'},
           ].map(({key, label}) => (
@@ -2287,15 +2287,15 @@ const styles = StyleSheet.create({
   bookGuideButton: {
     marginTop: 10,
     alignSelf: 'flex-start',
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 20,
-    backgroundColor: COLORS.primary,
+    paddingVertical: 4,
+    paddingHorizontal: 0,
+    backgroundColor: 'transparent',
   },
   bookGuideButtonText: {
-    color: COLORS.white,
-    fontSize: 13,
-    fontWeight: '600',
+    color: COLORS.primary,
+    fontSize: 14,
+    fontWeight: '500',
+    textDecorationLine: 'underline',
   },
   premiumBadge: {
     flexDirection: 'row',

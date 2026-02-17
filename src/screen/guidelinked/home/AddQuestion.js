@@ -292,7 +292,7 @@ const AddQuestion = ({navigation, route}) => {
                   styles.tabText,
                   activeTab === 'post' && styles.activeTabText,
                 ]}>
-                Create Post
+                Feed
               </Text>
               {activeTab === 'post' && <View style={styles.tabUnderline} />}
             </TouchableOpacity>
