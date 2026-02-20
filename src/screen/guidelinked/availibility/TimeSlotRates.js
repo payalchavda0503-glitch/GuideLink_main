@@ -1,7 +1,6 @@
 import {Button, Card} from '@rneui/themed';
-import React, {useEffect, useState} from 'react';
-import {Alert, Text, View} from 'react-native';
-import {TextInput} from 'react-native-gesture-handler';
+import React, {useEffect, useRef, useState} from 'react';
+import {Alert, Text, TextInput, View} from 'react-native';
 import Api from '../../../service/Api';
 import {
   API_GUIDANCE_UPDATE_ANSWER_RATE,
@@ -14,6 +13,7 @@ import {COLORS} from '../../../util/Theme';
 import HelpVideoIcon from '../HelpVideoIcon';
 
 const MIN_PAID_ANSWER_RATE = 1.99;
+const RATE_INPUT_REGEX = /^\d*\.?\d{0,2}$/;
 
 const TimeSlotRates = ({
   rates,
@@ -24,16 +24,21 @@ const TimeSlotRates = ({
   const [loaderVisible, setLoaderVisible] = useState(false);
   const [currentRates, setCurrentRates] = useState('');
   const [currentPaidAnswerRate, setCurrentPaidAnswerRate] = useState('');
+  const rateInputFocusedRef = useRef(false);
+  const paidAnswerInputFocusedRef = useRef(false);
 
   const handleRateChange = newRate => {
     if (typeof setRates === 'function') setRates(newRate);
   };
 
   useEffect(() => {
-    setCurrentRates(rates + '');
+    if (!rateInputFocusedRef.current) {
+      setCurrentRates(rates === undefined || rates === null ? '' : `${rates}`);
+    }
   }, [rates]);
 
   useEffect(() => {
+    if (paidAnswerInputFocusedRef.current) return;
     if (paidAnswerRate === undefined || paidAnswerRate === null) return;
     setCurrentPaidAnswerRate(paidAnswerRate + '');
   }, [paidAnswerRate]);
@@ -173,15 +178,15 @@ const TimeSlotRates = ({
                 ]}
                 keyboardType="decimal-pad"
                 placeholder="Rate"
-                maxLength={5}
+                maxLength={7}
                 value={currentRates}
-                // onChangeText={v => setCurrentRates(v)}
                 onChangeText={v => {
-                  // Check if the value is a number and less than or equal to 99
-                  if (/^\d{0,2}$/.test(v)) {
+                  if (RATE_INPUT_REGEX.test(v)) {
                     setCurrentRates(v);
                   }
                 }}
+                onFocus={() => (rateInputFocusedRef.current = true)}
+                onBlur={() => (rateInputFocusedRef.current = false)}
                 placeholderTextColor={COLORS.gray}
               />
               {/* <Text style={{fontSize: 16, color: '#555', padding: 10,flex: 7}}> / 25 Mins</Text> */}
@@ -200,7 +205,11 @@ const TimeSlotRates = ({
                   marginVertical: 0,
                 },
               ]}
-              disabled={currentRates < 10}
+              disabled={
+                currentRates === '' ||
+                !Number.isFinite(Number(currentRates)) ||
+                Number(currentRates) < 10
+              }
               titleStyle={{color: COLORS.white}}
               onPress={() => showRateAlertPopup()}
             />
@@ -294,11 +303,12 @@ const TimeSlotRates = ({
                 maxLength={10}
                 value={currentPaidAnswerRate}
                 onChangeText={v => {
-                  // Allow decimal with at most 2 digits after the point (e.g. 10, 10.5, 99.99)
                   if (/^\d*\.?\d{0,2}$/.test(v)) {
                     setCurrentPaidAnswerRate(v);
                   }
                 }}
+                onFocus={() => (paidAnswerInputFocusedRef.current = true)}
+                onBlur={() => (paidAnswerInputFocusedRef.current = false)}
                 placeholderTextColor={COLORS.gray}
               />
             </View>

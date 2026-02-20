@@ -2,7 +2,7 @@
 
 import React, {useState, useEffect, useCallback} from 'react';
 import {TouchableOpacity, Platform, Text} from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DatePicker from 'react-native-date-picker';
 import {COLORS, SIZES} from '../util/Theme';
 import {useFocusEffect} from '@react-navigation/native';
 
@@ -36,13 +36,11 @@ const CustomDatePicker = ({
     setShowPicker(true);
   };
 
-  const handleDateChange = (event, date) => {
-    setShowPicker(Platform.OS === 'ios');
-    if (event.type == 'set') {
-      if (date) {
-        setSelectedDate(date);
-        onChange(date);
-      }
+  const handleDateChange = date => {
+    setShowPicker(false);
+    if (date) {
+      setSelectedDate(date);
+      onChange(date);
     }
   };
 
@@ -68,17 +66,13 @@ const CustomDatePicker = ({
       </TouchableOpacity>
 
       {showPicker && (
-        <DateTimePicker
-          value={selectedDate || new Date()}
+        <DatePicker
+          modal
           mode="date"
-          display="default"
-          // minimumDate={
-          //   disablePastDates !== undefined && disablePastDates
-          //     ? disableToday !== undefined && disableToday
-          //       ? new Date().setDate(new Date().getDate() + 1)
-          //       : new Date()
-          //     : null
-          // }
+          open={showPicker}
+          date={selectedDate || new Date()}
+          onConfirm={handleDateChange}
+          onCancel={() => setShowPicker(false)}
           minimumDate={
             disablePastDates !== undefined && disablePastDates
               ? disableStartDate && new Date(disableStartDate) > new Date()
@@ -90,7 +84,6 @@ const CustomDatePicker = ({
                 : new Date()
               : null
           }
-          onChange={handleDateChange}
         />
       )}
     </>

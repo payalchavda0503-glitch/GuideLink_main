@@ -612,7 +612,7 @@ const ProfileIndex = ({navigation, route}) => {
                       <Text
                         style={[
                           DefaultStyle.blackBold,
-                          {color: COLORS.primary},
+                          {color: COLORS.primary,paddingBottom:5},
                         ]}>
                        What can I help with/ What am I looking for?
                       </Text>

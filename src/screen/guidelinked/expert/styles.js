@@ -221,6 +221,20 @@ export const styles = StyleSheet.create({
 
   //List exper screen
   flatlistContainer: {marginTop: 0},
+  card: {
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: 10,
+    marginHorizontal: 10,
+    marginVertical: 6,
+    // borderWidth: 0.5,
+    // borderColor: COLORS.gray,
+    shadowColor: COLORS.black,
+    shadowOffset: {width: 0, height: 0},
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 3,
+  },
   imageContent: {alignItems: 'center', flex: 1},
   nameContent: {
     marginStart: 15,

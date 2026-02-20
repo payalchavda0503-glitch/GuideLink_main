@@ -27,6 +27,24 @@ const List = ({
 
   const primaryCategoryTitle = primaryCategoryTitleRaw;
 
+  const getIntroductionText = () => {
+    const rawIntro =
+      item.introduction == 'null' || !item.introduction
+        ? '-'
+        : String(item.introduction);
+
+    // When searching, show full text so matches are visible
+    if (searchText) {
+      return rawIntro;
+    }
+
+    const words = rawIntro.trim().split(/\s+/);
+    if (words.length <= 50) {
+      return rawIntro;
+    }
+
+    return `${words.slice(0, 50).join(' ')}...`;
+  };
   const renderHighlightedText = (text, searchText, textStyle = {}) => {
     if (!text || text === 'null') {
       return <Text style={[DefaultStyle.text, {color: COLORS.black}]}>-</Text>;
@@ -64,7 +82,7 @@ const List = ({
       onPress={() => {
         onHandleDeatils(item.id);
       }}>
-      <View style={[DefaultStyle.row, {padding: 10}]}>
+      <View style={[styles.card, DefaultStyle.row]}>
         <View style={styles.imageContent}>
           <Image
             source={{uri: item.image_url}}
@@ -297,13 +315,9 @@ const List = ({
             </Pressable>
           </View>
 
-          <Text
-            numberOfLines={searchText ? undefined : 15}
-            ellipsizeMode="tail">
+          <Text>
             {renderHighlightedText(
-              item.introduction == 'null' || !item.introduction
-                ? '-'
-                : item.introduction,
+              getIntroductionText(),
               searchText,
               [DefaultStyle.text, {color: COLORS.black}],
             )}
