@@ -13,6 +13,7 @@ import {
   Platform,
   TextInput,
   KeyboardAvoidingView,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import IconFa from 'react-native-vector-icons/FontAwesome5';
@@ -30,6 +31,7 @@ import {
   API_GET_GUIDANCE_ANSWERS,
   API_GET_GUIDANCE_MY_QUESTIONS,
   API_GET_GUIDANCE_MY_ANSWER_QUESTION,
+  API_DELETE_GUIDANCE_REQUEST,
   API_TIMELINE_POST_GET_MY_POSTS,
   API_TIMELINE_POST_LIKE,
   API_TIMELINE_POST_AURA,
@@ -80,6 +82,7 @@ const MyTimeline = ({navigation}) => {
   const [commentLikingKey, setCommentLikingKey] = useState(null);
   const [commentsLoadingPostId, setCommentsLoadingPostId] = useState(null);
   const [deletingPostId, setDeletingPostId] = useState(null);
+  const [deletingGuidanceId, setDeletingGuidanceId] = useState(null);
   const [deletingCommentKey, setDeletingCommentKey] = useState(null);
   const [likesModalVisible, setLikesModalVisible] = useState(false);
   const [likesModalPostId, setLikesModalPostId] = useState(null);
@@ -777,6 +780,45 @@ const MyTimeline = ({navigation}) => {
     }
   };
 
+  const handleDeleteQuestion = async (guidanceId) => {
+    if (!token || deletingGuidanceId != null) return;
+    Alert.alert(
+      'Delete Question',
+      'Are you sure you want to delete this question?',
+      [
+        {text: 'Cancel', style: 'cancel'},
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            setDeletingGuidanceId(guidanceId);
+            try {
+              const response = await Api.post(`${API_DELETE_GUIDANCE_REQUEST}?guidance_id=${Number(guidanceId)}`);
+              if (response?.status === 'RC200') {
+                setMyQuestions((prev) => prev.filter((q) => q.id !== guidanceId));
+                setMyAnswers((prev) => prev.filter((q) => q.id !== guidanceId));
+                setAnswersExpandedByQuestion((prev) => {
+                  const next = {...prev};
+                  delete next[guidanceId];
+                  return next;
+                });
+                showToast(response?.message || 'Question deleted');
+              } else if (response?.message) {
+                showToast(response.message);
+              } else {
+                showToast('Could not delete question');
+              }
+            } catch (e) {
+              showToast('Could not delete question');
+            } finally {
+              setDeletingGuidanceId(null);
+            }
+          },
+        },
+      ],
+    );
+  };
+
   const handleSubmitComment = async (postId, commentText, parentId) => {
     const text = (commentText || '').trim();
     if (!text || !token || commentingPostId != null) return;
@@ -1454,14 +1496,27 @@ const MyTimeline = ({navigation}) => {
                 <Text style={styles.timeAgo}>{item.timeAgo}</Text>
               </View>
             </View>
-            <TouchableOpacity
-              style={styles.writeAnswerBtn}
-              onPress={() => {
-                setSelectedQuestion({id: item.id, userId: item.userId});
-                setAnswerModalVisible(true);
-              }}>
-              <Text style={styles.writeAnswerBtnText}>Answer this?</Text>
-            </TouchableOpacity>
+            {(activeTab === 'my_questions' || item.userId === userId) ? (
+              <TouchableOpacity
+                style={{padding: 4}}
+                onPress={() => handleDeleteQuestion(item.id)}
+                disabled={deletingGuidanceId === item.id}>
+                {deletingGuidanceId === item.id ? (
+                  <ActivityIndicator size="small" color={COLORS.gray} />
+                ) : (
+                  <Icon name="trash-2" size={20} color={COLORS.red} />
+                )}
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={styles.writeAnswerBtn}
+                onPress={() => {
+                  setSelectedQuestion({id: item.id, userId: item.userId});
+                  setAnswerModalVisible(true);
+                }}>
+                <Text style={styles.writeAnswerBtnText}>Answer this?</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Question title + description */}
