@@ -148,9 +148,9 @@ const QuestionAnswers = ({navigation}) => {
                   delete next[guidanceId];
                   return next;
                 });
-                showToast(response?.message || 'Question deleted');
+                // showToast(response?.message || 'Question deleted');
               } else if (response?.message) {
-                showToast(response.message);
+                // showToast(response.message);
               } else {
                 showToast('Could not delete question');
               }

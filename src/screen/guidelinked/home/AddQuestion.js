@@ -152,7 +152,7 @@ const AddQuestion = ({navigation, route}) => {
           setSelectedCategory(null);
           setHeading('');
           setQuestionText('');
-          navigation.navigate('ShowPost');
+          navigation.navigate('QuestionAnswers');
         } else if (data?.message) {
           showToast(data.message);
         } else {

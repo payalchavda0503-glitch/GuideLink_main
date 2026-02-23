@@ -10,7 +10,7 @@ import {
 } from './apiEndPoint';
 import {useToast} from 'react-native-toast-notifications';
 import {showToast} from '../redux/toastSlice';
-import {Platform} from 'react-native';
+import {Alert, Platform} from 'react-native';
 
 const Api = axios.create({
   baseURL: BASE_URL,
@@ -97,6 +97,24 @@ Api.interceptors.response.use(
     }
   },
   error => {
+    const res = error?.response;
+    if (res?.status === 401) {
+      Alert.alert(
+        'Session Expired',
+        'Your session has expired. Please log in again.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              store.dispatch(logout());
+            },
+          },
+        ],
+        {cancelable: false},
+      );
+      return Promise.reject(error);
+    }
+
     try {
       const cfg = error?.config || {};
       const fullUrl =
@@ -106,7 +124,6 @@ Api.interceptors.response.use(
 
       // Axios "Network Error" usually has no response; request may still contain useful fields.
       const req = error?.request;
-      const res = error?.response;
 
       console.log(
         'AXIOS_ERROR_FULL',

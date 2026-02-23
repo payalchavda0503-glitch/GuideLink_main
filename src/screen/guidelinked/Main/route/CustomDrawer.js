@@ -359,11 +359,13 @@ const CustomDrawer = () => {
         ? `https://guidelinked.com/expert/${encodeURIComponent(username.trim())}`
         : 'https://guidelinked.com';
     const message =
-      ' Hey, download the GuideLinked app and create an account! You can make money by sharing your experiences / expertise with someone and vice versa.\n\n' +
-      'Website: https://guidelinked.com\n' +
-      `My profile: ${profileUrl}\n\n` +
+      'Join me on GuideLinked! https://guidelinked.com\n\n' +
+      "Are you on Guidelinked yet? I'm spending more time there instead of the usual social media scroll.\n\n" +
+      'Give it a look!\n' +
+      `${profileUrl}\n\n` +
+      'Download the app:\n' +
       'Android: https://play.google.com/store/apps/details?id=com.guidelinked\n' +
-      'Apple: https://apps.apple.com';
+      'Apple: https://apps.apple.com/us/app/guidelinked/id6743425814';
 
     try {
       const shareOptions = {
