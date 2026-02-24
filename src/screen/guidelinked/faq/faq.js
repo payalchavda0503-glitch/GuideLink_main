@@ -31,7 +31,7 @@ const FAQScreen = ({navigation}) => {
   return (
     <>
       <IosStatusBar backgroundColor={COLORS?.primary} />
-      <SafeAreaView style={DefaultStyle?.flexView}>
+      {/* <SafeAreaView style={DefaultStyle?.flexView}> */}
         <AppHeader
           background={COLORS.primary}
           iconType={'Feather'}
@@ -67,7 +67,7 @@ const FAQScreen = ({navigation}) => {
         <View>
           <BottomTab />
         </View>
-      </SafeAreaView>
+      {/* </SafeAreaView> */}
     </>
   );
 };

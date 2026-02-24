@@ -51,8 +51,8 @@ const EarningIndex = ({navigation}) => {
     <>
       <IosStatusBar backgroundColor={COLORS.primary} />
 
-      <SafeAreaView
-        style={[DefaultStyle.flexView, {backgroundColor: COLORS.gray2}]}>
+       {/* <SafeAreaView
+        style={[DefaultStyle.flexView, {backgroundColor: COLORS.gray2}]}> */}
         <ScreenStatusBar
           backgroundColor={COLORS.primary}
           barStyle="dark-content"
@@ -81,7 +81,7 @@ const EarningIndex = ({navigation}) => {
           loaderVisible={loaderVisible}
           setLoaderVisible={setLoaderVisible}
         />
-      </SafeAreaView>
+        {/* </SafeAreaView> */}
     </>
   );
 };

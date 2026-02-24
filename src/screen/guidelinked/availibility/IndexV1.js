@@ -132,7 +132,7 @@ import {
     return (
       <>
       <IosStatusBar backgroundColor={COLORS.primary}/>
-      <SafeAreaView style={styles.container}>
+      {/* <SafeAreaView style={styles.container}> */}
         <ScreenStatusBar
           backgroundColor={COLORS.primary}
           barStyle="dark-content"
@@ -572,7 +572,7 @@ import {
           loaderVisible={loaderVisible}
           setLoaderVisible={setLoaderVisible}
         />
-      </SafeAreaView>
+      {/* </SafeAreaView> */}
       </>
     );
   };

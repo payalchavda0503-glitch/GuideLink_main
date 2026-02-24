@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     backgroundColor: COLORS.primary,
     paddingTop: 0,
-    paddingBottom: Platform.OS === 'ios' ? 8 : 0,
+    paddingBottom: Platform.OS === 'ios' ? 28 : 0,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: -2},
     shadowOpacity: 0.15,

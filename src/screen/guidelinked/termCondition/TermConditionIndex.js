@@ -11,8 +11,8 @@ const TermConditionIndex = ({navigation}) => {
   return (
     <>
       <IosStatusBar backgroundColor={COLORS.primary} />
-      <SafeAreaView
-        style={[DefaultStyle.flexView, {backgroundColor: COLORS.gray2}]}>
+      {/* <SafeAreaView
+        style={[DefaultStyle.flexView, {backgroundColor: COLORS.gray2}]}> */}
         <ScreenStatusBar
           backgroundColor={COLORS.primary}
           barStyle="dark-content"
@@ -33,7 +33,7 @@ const TermConditionIndex = ({navigation}) => {
           <BottomTab />
         </View>
         
-      </SafeAreaView>
+      {/* </SafeAreaView> */}
     </>
   );
 };
