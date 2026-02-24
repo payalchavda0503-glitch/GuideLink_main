@@ -181,10 +181,38 @@ const MyTimeline = ({navigation}) => {
     const u = raw.userdata || raw.user || {};
     const attachments = arr(raw.attachments || raw.images);
     const images = attachments.map(getAttachmentUrl).filter(Boolean);
-    const likesData = arr(raw.likesData);
-    const likedBy = likesData.map(
-      x => x.full_name ?? x.fullname ?? x.name ?? x.username ?? 'User',
-    );
+    const rawLikes =
+      raw.likesData ?? raw.likes_data ?? raw.like_users ?? raw.liked_by ?? null;
+    const likesText =
+      rawLikes &&
+      typeof rawLikes === 'object' &&
+      !Array.isArray(rawLikes) &&
+      typeof rawLikes.text === 'string'
+        ? String(rawLikes.text)
+        : null;
+    const likesData = arr(Array.isArray(rawLikes) ? rawLikes : []);
+    const likesImages = Array.isArray(rawLikes?.images)
+      ? rawLikes.images
+          .map(img => getAttachmentUrl(img))
+          .filter(v => typeof v === 'string' && v.trim())
+      : [];
+    const getLikeName = x => {
+      if (!x) return 'User';
+      if (typeof x === 'string') return x;
+      const u = x.user || x.userdata || x;
+      return (
+        u.full_name ??
+        u.fullname ??
+        u.name ??
+        u.username ??
+        u.user_name ??
+        'User'
+      );
+    };
+    const likedBy = likesData.map(getLikeName).filter(Boolean);
+    const likeCount = raw.likes ?? raw.likes_count ?? 0;
+    const likedByCount =
+      raw.liked_by_count ?? raw.likedByCount ?? Math.max(likeCount, likedBy.length);
     return {
       id: raw.id ?? raw.post_id,
       userId: raw.user_id ?? u.user_id ?? u.id,
@@ -195,11 +223,14 @@ const MyTimeline = ({navigation}) => {
       content: raw.content ?? raw.description ?? raw.text ?? '',
       hashtags: arr(raw.hashtags).map(h => (typeof h === 'string' ? h : h?.tag ?? '')),
       images,
-      likes: raw.likes ?? raw.likes_count ?? 0,
+      likes: likeCount,
       comments: raw.comments ?? raw.comments_count ?? 0,
       aura: raw.aura ?? 0,
       likedBy,
-      likedByCount: raw.liked_by_count ?? raw.likedByCount ?? likedBy.length,
+      likedByCount,
+      likesText,
+      likesImages,
+      likesText,
       type: raw.type === 'question' ? 'question' : 'post',
       isLiked: !!(raw.is_post_liked ?? raw.isLiked),
       isAuraGiven: !!(raw.is_post_aura ?? raw.isAuraGiven),
@@ -1268,23 +1299,48 @@ const MyTimeline = ({navigation}) => {
               )}
             </View>
           )}
-          {item.likedBy && item.likedBy.length > 0 && (
+          {(item.likesText || (item.likesImages && item.likesImages.length > 0)) && (
             <View style={styles.likedBySection}>
               <View style={styles.likedByAvatars}>
-                {item.likedBy.slice(0, 4).map((user, index) => (
-                  <View
-                    key={index}
-                    style={[styles.likedByAvatar, {marginLeft: index > 0 ? -8 : 0}]}>
-                    <View style={styles.likedByAvatarPlaceholder}>
-                      <Text style={styles.likedByAvatarText}>
-                        {user.charAt(0).toUpperCase()}
-                      </Text>
-                    </View>
-                  </View>
-                ))}
+                {(() => {
+                  const names = item.likedBy || [];
+                  const images = item.likesImages || [];
+                  const count = Math.min(
+                    4,
+                    Math.max(names.length, images.length),
+                  );
+                  return Array.from({length: count}).map((_, index) => {
+                    const rawImg = images[index];
+                    const avatarUrl =
+                      typeof rawImg === 'string' ? rawImg : null;
+                    const name = names[index] || 'U';
+                    return (
+                      <View
+                        key={index}
+                        style={[
+                          styles.likedByAvatar,
+                          {marginLeft: index > 0 ? -8 : 0},
+                        ]}>
+                        {avatarUrl ? (
+                          <FastImage
+                            source={{uri: avatarUrl}}
+                            style={styles.likedByAvatarPlaceholder}
+                            resizeMode={FastImage.resizeMode.cover}
+                          />
+                        ) : (
+                          <View style={styles.likedByAvatarPlaceholder}>
+                            <Text style={styles.likedByAvatarText}>
+                              {name.charAt(0).toUpperCase()}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                    );
+                  });
+                })()}
               </View>
               <Text style={styles.likedByText}>
-                {item.likedBy[0]} And {item.likedByCount} Others Liked This
+                {item.likesText || ''}
               </Text>
             </View>
           )}
@@ -1707,9 +1763,9 @@ const MyTimeline = ({navigation}) => {
   const ListEmpty = () => (
     <View style={styles.empty}>
       <Text style={styles.emptyText}>
-        {activeTab === 'my_post' && 'No any feed available. Start with adding a feed.'}
-        {activeTab === 'my_questions' && 'No questions yet'}
-        {activeTab === 'my_answers' && 'No answers yet'}
+        {activeTab === 'my_post' && 'No feed found'}
+        {activeTab === 'my_questions' && 'No active question found'}
+        {activeTab === 'my_answers' && "You haven't answered any question yet."}
       </Text>
     </View>
   );

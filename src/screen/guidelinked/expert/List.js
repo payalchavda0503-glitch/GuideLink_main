@@ -325,7 +325,9 @@ const List = ({
 
           {item.help_with.length > 0 && (
             <>
-              <Text style={styles.whatHelp}>What can I help with ?</Text>
+              <Text style={styles.whatHelp}>
+                What can I help with / What am I looking for?
+              </Text>
               {item.help_with.map((val, index) => (
                 <View key={index} style={DefaultStyle.flexDirection}>
                   <AppIcons

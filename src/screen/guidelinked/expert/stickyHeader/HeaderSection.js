@@ -379,7 +379,9 @@ const HeaderSection = ({dataList, onScrollDown, onBookAppointment}) => {
 
         {dataList.help_with && dataList.help_with.length > 0 && (
           <>
-            <Text style={styles.whatHelp}>What can I help with?</Text>
+            <Text style={styles.whatHelp}>
+              What can I help with / What am I looking for?
+            </Text>
 
             <FlatList
               keyExtractor={item => item.question.toString()}

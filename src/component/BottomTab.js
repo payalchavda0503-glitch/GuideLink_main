@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   },
 
   text: {
-    fontSize: 11,
+    fontSize: 9,
     color: COLORS.white,
     textAlign: 'center',
   },
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
   },
 
   centerText: {
-    fontSize: 11,
+    fontSize: 9,
     color: COLORS.white,
     textAlign: 'center',
   },

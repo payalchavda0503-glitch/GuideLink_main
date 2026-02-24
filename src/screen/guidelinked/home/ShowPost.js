@@ -40,6 +40,7 @@ import {
   BASE_URL,
   WEB_URL,
 } from '../../../service/apiEndPoint';
+import images from '../../../util/IMGLIST';
 import {log, showToast} from '../../../util/Toast';
 import OptionsMenu from 'react-native-option-menu';
 
@@ -154,10 +155,37 @@ const ShowPost = ({navigation}) => {
       (u.full_name ?? u.fullname ?? u.username ?? u.name ?? raw.user_name) ||
       'User';
     const userAvatar = getAvatarUrl(u, raw) || null;
-    const likesData = arr(raw.likesData);
-    const likedBy = likesData.map(
-      x => x.full_name ?? x.fullname ?? x.username ?? x.name ?? 'User',
-    );
+    const rawLikes = raw.likesData ?? raw.likes_data ?? raw.like_users ?? raw.liked_by ?? null;
+    const likesText =
+      rawLikes &&
+      typeof rawLikes === 'object' &&
+      !Array.isArray(rawLikes) &&
+      typeof rawLikes.text === 'string'
+        ? String(rawLikes.text)
+        : null;
+    const likesData = arr(Array.isArray(rawLikes) ? rawLikes : []);
+    const likesImages = Array.isArray(rawLikes?.images)
+      ? rawLikes.images
+          .map(img => getAttachmentUrl(img))
+          .filter(v => typeof v === 'string' && v.trim())
+      : [];
+    const getLikeName = x => {
+      if (!x) return 'User';
+      if (typeof x === 'string') return x;
+      const u = x.user || x.userdata || x;
+      return (
+        u.full_name ??
+        u.fullname ??
+        u.name ??
+        u.username ??
+        u.user_name ??
+        'User'
+      );
+    };
+    const likedBy = likesData.map(getLikeName).filter(Boolean);
+    const likeCount = raw.likes ?? raw.likes_count ?? 0;
+    const likedByCount =
+      raw.liked_by_count ?? raw.likedByCount ?? Math.max(likeCount, likedBy.length);
     return {
       id: raw.id ?? raw.post_id,
       userId: raw.user_id ?? u.user_id ?? u.id,
@@ -172,11 +200,13 @@ const ShowPost = ({navigation}) => {
         typeof h === 'string' ? h : h?.tag ?? '',
       ),
       images,
-      likes: raw.likes ?? raw.likes_count ?? 0,
+      likes: likeCount,
       comments: raw.comments ?? raw.comments_count ?? 0,
       aura: raw.aura ?? 0,
       likedBy,
-      likedByCount: raw.liked_by_count ?? raw.likedByCount ?? likedBy.length,
+      likedByCount,
+      likesText,
+      likesImages,
       type: raw.type === 'question' ? 'question' : 'post',
       paidAnswers: raw.paid_answers ?? raw.paidAnswers ?? 0,
       freeAnswers: raw.free_answers ?? raw.freeAnswers ?? 0,
@@ -826,26 +856,48 @@ const ShowPost = ({navigation}) => {
             </View>
           )}
 
-          {item.likedBy && item.likedBy.length > 0 && (
+          {(item.likesText || (item.likesImages && item.likesImages.length > 0)) && (
             <View style={styles.likedBySection}>
               <View style={styles.likedByAvatars}>
-                {item.likedBy.slice(0, 4).map((user, index) => (
-                  <View
-                    key={index}
-                    style={[
-                      styles.likedByAvatar,
-                      {marginLeft: index > 0 ? -8 : 0},
-                    ]}>
-                    <View style={styles.likedByAvatarPlaceholder}>
-                      <Text style={styles.likedByAvatarText}>
-                        {user.charAt(0).toUpperCase()}
-                      </Text>
-                    </View>
-                  </View>
-                ))}
+                {(() => {
+                  const names = item.likedBy || [];
+                  const images = item.likesImages || [];
+                  const count = Math.min(
+                    4,
+                    Math.max(names.length, images.length),
+                  );
+                  return Array.from({length: count}).map((_, index) => {
+                    const rawImg = images[index];
+                    const avatarUrl =
+                      typeof rawImg === 'string' ? rawImg : null;
+                    const name = names[index] || 'U';
+                    return (
+                      <View
+                        key={index}
+                        style={[
+                          styles.likedByAvatar,
+                          {marginLeft: index > 0 ? -8 : 0},
+                        ]}>
+                        {avatarUrl ? (
+                          <FastImage
+                            source={{uri: avatarUrl}}
+                            style={styles.likedByAvatarPlaceholder}
+                            resizeMode={FastImage.resizeMode.cover}
+                          />
+                        ) : (
+                          <View style={styles.likedByAvatarPlaceholder}>
+                            <Text style={styles.likedByAvatarText}>
+                              {name.charAt(0).toUpperCase()}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                    );
+                  });
+                })()}
               </View>
               <Text style={styles.likedByText}>
-                {item.likedBy[0]} And {item.likedByCount} Others Liked This
+                {item.likesText || ''}
               </Text>
             </View>
           )}
@@ -1131,10 +1183,7 @@ const ShowPost = ({navigation}) => {
             ItemSeparatorComponent={() => <View style={styles.separator} />}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>No any feed available.</Text>
-                <Text style={styles.emptySubtext}>
-                Start with adding a feed.
-                </Text>
+                <Text style={styles.emptySubtext}>Start with adding a feed.</Text>
               </View>
             }
           />

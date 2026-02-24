@@ -152,7 +152,7 @@ const AddQuestion = ({navigation, route}) => {
           setSelectedCategory(null);
           setHeading('');
           setQuestionText('');
-          navigation.navigate('QuestionAnswers');
+          navigation.navigate('Mainscreen', {screen: 'QuestionAnswers'});
         } else if (data?.message) {
           showToast(data.message);
         } else {
@@ -204,7 +204,7 @@ const AddQuestion = ({navigation, route}) => {
           setPostImages([]);
           setExistingPostImages([]);
           setEditingPostId(null);
-          navigation.navigate('ShowPost');
+          navigation.navigate('Mainscreen', {screen: 'ShowPost'});
         } else if (data?.message) {
           showToast(data.message);
         } else {
