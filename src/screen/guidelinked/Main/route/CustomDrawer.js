@@ -130,9 +130,16 @@ const CustomDrawer = () => {
       id: '4',
       img: 'setting',
       type: 'AntDesign',
-      title: 'My Profile',
+      title: 'Personal Information',
       navigate: 'AccountSetting',
       isVector: true,
+    },
+    {
+      id: '11',
+      img: profile,
+      title: 'Edit Profile',
+      navigate: 'ProfileTabIndex',
+      isVector: false,
     },
     {
       id: '18',
@@ -143,13 +150,6 @@ const CustomDrawer = () => {
       type: 'MaterialCommunityIcons',
       img: 'text-box-multiple-outline',
       become: [
-        {
-          id: '11',
-          img: profile,
-          title: 'Edit Profile',
-          navigate: 'ProfileTabIndex',
-          isVector: false,
-        },
         {
           id: '12',
           img: 'clock',
@@ -354,17 +354,19 @@ const CustomDrawer = () => {
   };
 
   const onShare = async () => {
+    const baseUrl = 'https://www.guidelinked.com';
     const profileUrl =
       username && username.trim()
-        ? `https://guidelinked.com/expert/${encodeURIComponent(username.trim())}`
-        : 'https://guidelinked.com';
+        ? `${baseUrl}/expert/${encodeURIComponent(username.trim())}`
+        : baseUrl;
     const message =
-      'Join me on GuideLinked! https://guidelinked.com\n\n' +
-      "Are you on Guidelinked yet? I'm spending more time there instead of the usual social media scroll.\n\n" +
+      `${baseUrl}\n` +
+      'Join me on GuideLinked!\n\n' +
+      "Are you on Guidelinked yet? I'm moving away from the usual social media scroll and spending more time there. It's actually productive—you can ask real questions to experts or post your own insights to a feed that actually matters. It's about time our social platforms reflected the value we bring, right?\n\n" +
       'Give it a look!\n' +
       `${profileUrl}\n\n` +
       'Download the app:\n' +
-      'Android: https://play.google.com/store/apps/details?id=com.guidelinked\n' +
+      'Android: https://play.google.com/store/apps/details?id=com.app.guidelinked\n' +
       'Apple: https://apps.apple.com/us/app/guidelinked/id6743425814';
 
     try {

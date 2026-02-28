@@ -12,6 +12,7 @@ import {
   Platform,
   Dimensions,
   Alert,
+  ScrollView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import BottomTab from '../../../component/BottomTab';
@@ -24,6 +25,7 @@ import {COLORS} from '../../../util/Theme';
 import FastImage from 'react-native-fast-image';
 import Api from '../../../service/Api';
 import {
+  API_CATEGORY_LIST,
   API_GET_PROFILE,
   API_GET_GUIDANCE_DATA,
   API_GET_GUIDANCE_ANSWERS,
@@ -33,6 +35,7 @@ import {
   API_POKE_USER,
   API_SCHEDULE_MY_TIMELINE,
   BASE_URL,
+  WEB_URL,
 } from '../../../service/apiEndPoint';
 import {
   initPaymentSheet,
@@ -43,6 +46,8 @@ import {log, showToast} from '../../../util/Toast';
 
 const QUESTIONS_PAGE_SIZE = 50;
 
+const defaultCategories = [{label: 'All Categories', value: 'all_guides', image: null}];
+
 const QuestionAnswers = ({navigation}) => {
   const [questions, setQuestions] = useState([]);
   const [questionsLoading, setQuestionsLoading] = useState(false);
@@ -51,6 +56,10 @@ const QuestionAnswers = ({navigation}) => {
   const [questionsLastPage, setQuestionsLastPage] = useState(1);
   const [questionsHasMore, setQuestionsHasMore] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [categoryValue, setCategoryValue] = useState('all_guides');
+  const [categoryItems, setCategoryItems] = useState(defaultCategories);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [categoryModalVisible, setCategoryModalVisible] = useState(false);
   const [answerModalVisible, setAnswerModalVisible] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState(null);
   const [answerSubmitting, setAnswerSubmitting] = useState(false);
@@ -67,6 +76,7 @@ const QuestionAnswers = ({navigation}) => {
   const [deletingGuidanceId, setDeletingGuidanceId] = useState(null);
   const token = useSelector(s => s.AuthSlice?.token);
   const flatListRef = useRef(null);
+  const categoryValueRef = useRef('all_guides');
 
   const isAnswersExpanded = questionId =>
     answersExpandedByQuestion[questionId] === true;
@@ -80,6 +90,39 @@ const QuestionAnswers = ({navigation}) => {
 
   const scrollToTop = () => {
     flatListRef.current?.scrollToOffset({offset: 0, animated: true});
+  };
+
+  const getCategoryImageUrl = img => {
+    if (!img || typeof img !== 'string') return null;
+    if (img.startsWith('http://') || img.startsWith('https://')) return img;
+    const base = WEB_URL.replace(/\/$/, '');
+    return img.startsWith('/') ? base + img : base + '/' + img;
+  };
+
+  const fetchCategories = async () => {
+    try {
+      setCategoriesLoading(true);
+      const res = await Api.get(`${API_CATEGORY_LIST}?show=all`);
+      if (res?.status === 'RC200' && Array.isArray(res?.data)) {
+        const apiList = res.data.map(item => {
+          const label = item.name || item.title || item.category_name || String(item.id);
+          const rawValue = item.expert_type || item.type || item.slug || item.id;
+          const value = rawValue != null ? String(rawValue) : String(item.id);
+          const img = item.thumbnail || item.image || item.image_url || item.icon || null;
+          return {
+            label,
+            value,
+            image: img ? getCategoryImageUrl(img) : null,
+          };
+        });
+        setCategoryItems([{label: 'All Categories', value: 'all_guides', image: null}, ...apiList]);
+      }
+    } catch (e) {
+      console.warn('QuestionAnswers categories fetch failed, using defaults:', e);
+      setCategoryItems(defaultCategories);
+    } finally {
+      setCategoriesLoading(false);
+    }
   };
 
   const getPublishableKey = async () => {
@@ -169,12 +212,28 @@ const QuestionAnswers = ({navigation}) => {
     React.useCallback(() => {
       setQuestionsPage(1);
       setQuestionsHasMore(true);
+      fetchCategories();
       fetchQuestions(1);
       getPublishableKey();
       loadPaidAnswerRateFromSchedule();
       fetchProfile();
     }, []),
   );
+
+  useEffect(() => {
+    const valueInItems = categoryItems.some(it => String(it.value) === String(categoryValue));
+    if (categoryItems.length > 0 && !valueInItems) {
+      setCategoryValue('all_guides');
+    }
+  }, [categoryItems]);
+
+  useEffect(() => {
+    if (categoryValueRef.current === categoryValue) return;
+    categoryValueRef.current = categoryValue;
+    setQuestionsPage(1);
+    setQuestionsHasMore(true);
+    fetchQuestions(1);
+  }, [categoryValue]);
 
   // const formatAnswerTime = v => {
   //   if (!v) return '';
@@ -620,7 +679,10 @@ const QuestionAnswers = ({navigation}) => {
       } else {
         setQuestionsLoadingMore(true);
       }
-      const url = `${API_GET_GUIDANCE_DATA}?page=${pageNo}&limit=${QUESTIONS_PAGE_SIZE}`;
+      let url = `${API_GET_GUIDANCE_DATA}?page=${pageNo}&limit=${QUESTIONS_PAGE_SIZE}`;
+      if (categoryValue !== 'all_guides') {
+        url += `&category=${encodeURIComponent(String(categoryValue || ''))}`;
+      }
       const res = await Api.get(url);
       if (pageNo === 1) setQuestionsLoading(false);
       else setQuestionsLoadingMore(false);
@@ -989,6 +1051,18 @@ const QuestionAnswers = ({navigation}) => {
           isDasboard={true}
         />
 
+        <View style={styles.categoryFilterRow}>
+          <TouchableOpacity
+            style={styles.categoryFilterBtn}
+            onPress={() => setCategoryModalVisible(true)}
+            activeOpacity={0.7}>
+            <Icon name="filter" size={18} color={COLORS.gray || '#666'} style={{marginRight: 8}} />
+            <Text style={styles.categoryFilterBtnText}>
+              {categoryItems.find(it => it.value === categoryValue)?.label ?? 'Categories'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         {questionsLoading && questions.length === 0 ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={COLORS.primary} />
@@ -1016,9 +1090,9 @@ const QuestionAnswers = ({navigation}) => {
             }
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>No questions yet</Text>
+                <Text style={styles.emptyText}>No questions available</Text>
                 <Text style={styles.emptySubtext}>
-                  Be the first to ask a question!
+                  No one has asked any questions yet.
                 </Text>
               </View>
             }
@@ -1029,6 +1103,54 @@ const QuestionAnswers = ({navigation}) => {
           <BottomTab onHomePress={scrollToTop} />
         </View>
       </View>
+
+      {/* Category Filter Modal */}
+      <Modal
+        visible={categoryModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setCategoryModalVisible(false)}>
+        <TouchableOpacity
+          style={styles.categoryModalOverlay}
+          activeOpacity={1}
+          onPress={() => setCategoryModalVisible(false)}>
+          <View style={styles.categoryModalContent} onStartShouldSetResponder={() => true}>
+            <View style={styles.categoryModalHeader}>
+              <Text style={styles.categoryModalTitle}>Select Category</Text>
+              <TouchableOpacity
+                onPress={() => setCategoryModalVisible(false)}
+                hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}>
+                <Icon name="x" size={24} color={COLORS.black} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView
+              style={styles.categoryModalList}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled">
+              {categoryItems.map(item => {
+                const isSelected = categoryValue === item.value;
+                return (
+                  <TouchableOpacity
+                    key={item.value}
+                    style={[styles.categoryModalItem, isSelected && styles.categoryModalItemSelected]}
+                    onPress={() => {
+                      setCategoryValue(item.value);
+                      setCategoryModalVisible(false);
+                    }}
+                    activeOpacity={0.7}>
+                    <Text style={[styles.categoryModalItemText, isSelected && styles.categoryModalItemTextSelected]}>
+                      {item.label}
+                    </Text>
+                    {isSelected && (
+                      <Icon name="check" size={20} color={COLORS.primary} />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       {/* Add Answer Modal */}
       <Modal
@@ -1199,6 +1321,80 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 100,
+  },
+  categoryFilterRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    paddingTop: 8,
+  },
+  categoryFilterBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    backgroundColor: COLORS.white3 || '#F5F5F5',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  categoryFilterBtnText: {
+    fontSize: 15,
+    color: COLORS.gray || '#666',
+    fontWeight: '500',
+  },
+  categoryModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  categoryModalContent: {
+    width: '100%',
+    maxWidth: 360,
+    maxHeight: '70%',
+    backgroundColor: COLORS.white || '#FFF',
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  categoryModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  categoryModalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.black || '#000',
+  },
+  categoryModalList: {
+    maxHeight: 360,
+  },
+  categoryModalItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#E8E8E8',
+  },
+  categoryModalItemSelected: {
+    backgroundColor: 'rgba(0,122,255,0.08)',
+  },
+  categoryModalItemText: {
+    fontSize: 16,
+    color: COLORS.black || '#000',
+  },
+  categoryModalItemTextSelected: {
+    color: COLORS.primary,
+    fontWeight: '600',
   },
   cardWrapper: {
     marginBottom: 16,

@@ -165,7 +165,7 @@ import {
                             fontWeight: 'bold',
                             color: COLORS.primary,
                           }}>
-                          Payout Account Setup
+                         Bank account linking with Strip
                       </Text>
                       <Text
                           style={{

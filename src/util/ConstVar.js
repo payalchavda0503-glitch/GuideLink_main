@@ -202,7 +202,7 @@ export const DefaultStyle = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingVertical: 20,
-    paddingHorizontal: 30,
+    paddingHorizontal: 20,
   },
 
   imageContainer: {

@@ -740,7 +740,7 @@ const ShowPost = ({navigation}) => {
             <View style={styles.userNameRow}>
               <Text style={styles.userName}>{item.userName}</Text>
             </View>
-            <Text style={styles.userAction}>{item.action}</Text>
+            {/* <Text style={styles.userAction}>{item.action}</Text> */}
             <Text style={styles.timeAgo}>{formatTimeAgo(item.timeAgo)}</Text>
           </View>
           <OptionsMenu
