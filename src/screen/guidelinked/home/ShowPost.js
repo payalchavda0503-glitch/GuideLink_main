@@ -321,7 +321,7 @@ const ShowPost = ({navigation}) => {
       }
     } catch (e) {
       console.error('Aura error:', e);
-      showToast('Could not update aura');
+     /// showToast('Could not update aura');
     } finally {
       setAuraPostId(null);
     }

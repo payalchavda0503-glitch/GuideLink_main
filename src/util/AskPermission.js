@@ -29,21 +29,31 @@ const openAppSettings = () => {
 
 const checkAndRequestPermission = async permission => {
   const result = await check(permission);
-  console.log(result);
+  console.log('checkAndRequestPermission initial:', permission, result);
 
-  if (result === RESULTS.GRANTED) {
+  // Treat both GRANTED and LIMITED as usable access (Android 14+/iOS "selected photos")
+  if (result === RESULTS.GRANTED || result === RESULTS.LIMITED) {
     return true;
-  } else if (result === RESULTS.DENIED) {
+  }
+
+  if (result === RESULTS.DENIED) {
     const requestResult = await request(permission);
+    console.log('checkAndRequestPermission request result:', permission, requestResult);
+
     if (requestResult === RESULTS.BLOCKED) {
       showPermissionBlockedPopup();
       return false;
     }
-    return requestResult === RESULTS.GRANTED;
-  } else if (result === RESULTS.BLOCKED) {
+
+    return requestResult === RESULTS.GRANTED || requestResult === RESULTS.LIMITED;
+  }
+
+  if (result === RESULTS.BLOCKED) {
     showPermissionBlockedPopup();
     return false;
   }
+
+  // UNAVAILABLE or any other state – do not hard‑fail, but signal no explicit permission
   return false;
 };
 

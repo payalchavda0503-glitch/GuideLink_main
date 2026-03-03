@@ -324,7 +324,7 @@ const MyTimeline = ({navigation}) => {
         showToast(data.message);
       }
     } catch (e) {
-      showToast('Could not update aura');
+    //  showToast('Could not update aura');
     } finally {
       setAuraPostId(null);
     }
