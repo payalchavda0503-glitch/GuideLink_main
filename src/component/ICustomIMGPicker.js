@@ -15,6 +15,7 @@ export const CustomeImagePicker = () => {
     }
 
     var options = {
+      mediaType: 'photo',
       storageOptions: {
         skipBackup: true,
         path: 'image',
@@ -22,21 +23,23 @@ export const CustomeImagePicker = () => {
     };
 
     launchImageLibrary(options, response => {
-      console.log("__DATA___",response)
+      console.log('__DATA___', response);
       if (response.error) {
         log('ImagePicker Error: ', response.error);
         reject(response.error);
+        return;
       }
-
       if (response.didCancel) {
         log('User cancelled image picker');
-      } else if (response != null && response.assets.length > 0) {
-        const img = response.assets[0]?.uri;
+        reject(new Error('User cancelled'));
+        return;
+      }
+      const img = response.uri || response.assets?.[0]?.uri;
+      if (img) {
         log(img);
         resolve(img);
       } else {
-        // Handle case where no image is selected
-        reject('No image selected');
+        reject(new Error('No image selected'));
       }
     });
   });

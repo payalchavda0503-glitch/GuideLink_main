@@ -58,8 +58,12 @@ export const requestCameraPermission = async () => {
 export const requestGalleryPermission = async () => {
   const permission = Platform.select({
     ios: PERMISSIONS.IOS.PHOTO_LIBRARY,
-    android: PERMISSIONS.ANDROID.READ_MEDIA_IMAGES,
+    android:
+      Platform.Version >= 33
+        ? PERMISSIONS.ANDROID.READ_MEDIA_IMAGES
+        : PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE,
   });
+  if (!permission) return false;
   return await checkAndRequestPermission(permission);
 };
 

@@ -243,6 +243,7 @@ const CustomDrawer = () => {
       })
       .catch(error => {
         log(`gallery picker  Error:${error}`);
+        IMGPickerDialog();
       });
   };
 
