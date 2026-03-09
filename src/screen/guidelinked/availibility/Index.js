@@ -205,7 +205,7 @@ const Index = ({navigation, route}) => {
                       fontWeight: 'bold',
                       color: COLORS.primary,
                     }}>
-                    Bank account linking with Strip
+                    Bank account linking with Stripe
                   </Text>
                   <Text
                     style={{

@@ -10,8 +10,10 @@ export const CustomeImagePicker = () => {
   return new Promise((resolve, reject) => {
     if (Platform.OS === 'ios') {
       Permission(PERMISSIONS.IOS.PHOTO_LIBRARY);
-    } else {
-      Permission(PERMISSIONS.ANDROID.READ_MEDIA_IMAGES);
+    } else if (Platform.OS === 'android' && Platform.Version < 33) {
+      // Only request legacy external storage read permission on Android 12 and below.
+      // Android 13+ uses the system Photo Picker without READ_MEDIA_* permissions.
+      Permission(PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE);
     }
 
     var options = {

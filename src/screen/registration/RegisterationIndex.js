@@ -308,14 +308,8 @@ const RegisterationIndex = ({navigation}) => {
     }
   };
 
-  useEffect(() => {
-    const selectedItem = timeZoneList.find(
-      item => item.selected === true || item.selected === 'true',
-    );
-    if (selectedItem) {
-      setTimeZone(selectedItem.value);
-    }
-  }, [timeZoneList]);
+  // Do not pre-select any timezone; user must choose explicitly.
+  // timeZone stays null until user selects from the dropdown.
 
   return (
     <SafeAreaView style={DefaultStyle.flexView}>

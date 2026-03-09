@@ -66,15 +66,26 @@ export const requestCameraPermission = async () => {
 };
 
 export const requestGalleryPermission = async () => {
-  const permission = Platform.select({
-    ios: PERMISSIONS.IOS.PHOTO_LIBRARY,
-    android:
-      Platform.Version >= 33
-        ? PERMISSIONS.ANDROID.READ_MEDIA_IMAGES
-        : PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE,
-  });
-  if (!permission) return false;
-  return await checkAndRequestPermission(permission);
+  const platform = Platform.OS;
+
+  if (platform === 'ios') {
+    // iOS still uses the photo library permission
+    return await checkAndRequestPermission(PERMISSIONS.IOS.PHOTO_LIBRARY);
+  }
+
+  // Android:
+  // - For Android 13+ (API 33+), use the system Photo Picker which does NOT
+  //   require READ_MEDIA_* or storage permissions for one‑time image selection.
+  // - For Android 12 and below, we keep the legacy READ_EXTERNAL_STORAGE with
+  //   maxSdkVersion=32 declared in the manifest.
+  if (Platform.Version >= 33) {
+    // No runtime permission needed – Photo Picker handles user selection.
+    return true;
+  }
+
+  return await checkAndRequestPermission(
+    PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE,
+  );
 };
 
 export const Permission = permission => {

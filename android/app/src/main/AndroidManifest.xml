@@ -2,10 +2,9 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- Permissions for media / storage (gallery) -->
-    <!-- For Android 13+ (API 33+): read images from media storage -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <!-- For Android 12 and below: legacy external storage read permission -->
+    <!-- Legacy external storage read permission for Android 12 and below.
+         For Android 13+ the app uses the system photo picker and does NOT
+         request persistent photo/video storage permissions, per Play policy. -->
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />

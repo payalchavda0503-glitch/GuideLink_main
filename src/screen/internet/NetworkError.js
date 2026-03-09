@@ -8,22 +8,26 @@ import {
   Platform,
   View,
 } from 'react-native';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 //import {showToast} from '../../util/Toast';
 import {COLORS, SIZES} from '../../util/Theme';
 import ic_no_wifi from '../../assets/images/ic_no_wifi.png';
 import {useDispatch, useSelector} from 'react-redux';
 import {showToast} from '../../redux/toastSlice';
 import IosStatusBar from '../../component/IosStatusBar';
-import NetInfo, {addEventListener} from '@react-native-community/netinfo';
+import NetInfo from '@react-native-community/netinfo';
 import { checkInternet } from '../../redux/NetworkStatus';
 import { DefaultStyle } from '../../util/ConstVar';
 import { simpleToast } from '../../util/Toast';
 
+const DEBOUNCE_MS = 600;
+
 const NetworkError = ({children}) => {
   const dispatch = useDispatch();
-  const onRefresh = () => {
+  const debounceRef = useRef(null);
+  const lastDispatchedRef = useRef(null);
 
+  const onRefresh = () => {
     if(Platform.OS=='ios')
     {
       simpleToast("Please check your Internet connection")
@@ -32,43 +36,39 @@ const NetworkError = ({children}) => {
      }
   };
 
-//inernet check
-useEffect(() => {
-  const removeNetInfoSubscription = NetInfo.addEventListener(state => {
-    // if (state.type == 'wifi') {
-    //   if(Platform.OS=="ios"){
-    //     const offline = state.isConnected;
-    //     dispatch(checkInternet(offline));
-    //   }
-    //   else{
-    //     const offline =
-    //     state.isConnected && state.isInternetReachable && state.isWifiEnabled;
-    //   dispatch(checkInternet(offline));
-    //   }
-    // } else {
-    //   const offline = state.isConnected && state.isInternetReachable;
-    //   dispatch(checkInternet(offline));
-    // }
-
-    if(Platform.OS=="ios"){
-      const offline = state.isConnected;
-      dispatch(checkInternet(offline));
-    }
-    else{
-      if (state.type == 'wifi') {
-        const offline =
-        state.isConnected && state.isInternetReachable && state.isWifiEnabled;
-        dispatch(checkInternet(offline));
-      }else{
-        const offline = state.isConnected && state.isInternetReachable;
-       dispatch(checkInternet(offline));
+  // Internet check: debounce so connection switches (e.g. wifi <-> mobile) don't flicker the UI
+  useEffect(() => {
+    const applyState = (state) => {
+      let online;
+      if (Platform.OS === 'ios') {
+        online = state.isConnected;
+      } else {
+        if (state.type === 'wifi') {
+          online =
+            state.isConnected && state.isInternetReachable && state.isWifiEnabled;
+        } else {
+          online = state.isConnected && state.isInternetReachable;
+        }
       }
-    }
+      if (lastDispatchedRef.current !== online) {
+        lastDispatchedRef.current = online;
+        dispatch(checkInternet(online));
+      }
+    };
 
-  });
+    const removeNetInfoSubscription = NetInfo.addEventListener(state => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        debounceRef.current = null;
+        applyState(state);
+      }, DEBOUNCE_MS);
+    });
 
-  return () => removeNetInfoSubscription();
-}, []);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      removeNetInfoSubscription();
+    };
+  }, [dispatch]);
 
   const isOnline = useSelector(s => s.NetworkStatus.status);
 
