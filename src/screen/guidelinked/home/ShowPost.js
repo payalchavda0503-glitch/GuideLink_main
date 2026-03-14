@@ -27,6 +27,7 @@ const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
 import FastImage from 'react-native-fast-image';
 import Api from '../../../service/Api';
 import {
+  API_GET_PROFILE,
   API_TIMELINE_POST_GET,
   API_TIMELINE_POST_LIKE,
   API_TIMELINE_POST_AURA,
@@ -51,6 +52,7 @@ const ShowPost = ({navigation}) => {
   const [openCommentsId, setOpenCommentsId] = useState(null);
   const [commentTexts, setCommentTexts] = useState({});
   const [comments, setComments] = useState({});
+  const [userId, setUserId] = useState(null);
   const currentUserName = useSelector(s => s.AuthSlice.name) || 'User';
   const token = useSelector(s => s.AuthSlice?.token);
   const flatListRef = useRef(null);
@@ -86,8 +88,22 @@ const ShowPost = ({navigation}) => {
     flatListRef.current?.scrollToOffset({offset: 0, animated: true});
   };
 
+  const fetchProfile = async () => {
+    try {
+      const res = await Api.get(API_GET_PROFILE);
+      if (res?.status === 'RC200' && res?.data?.id != null) {
+        setUserId(Number(res.data.id));
+        return Number(res.data.id);
+      }
+    } catch (e) {
+      log('Failed to load profile');
+    }
+    return null;
+  };
+
   useFocusEffect(
     React.useCallback(() => {
+      fetchProfile();
       fetchPosts();
     }, []),
   );
@@ -385,7 +401,7 @@ const ShowPost = ({navigation}) => {
         body: formdata,
       });
       const data = await res.json().catch(() => ({}));
-      if (data?.status === 'RC200') {
+      if (data?.status === 'RC200' || data?.message?.toLowerCase()?.includes('not found')) {
         setComments(prev => {
           const list = prev[postId] || [];
           const removedIds = new Set([String(commentId)]);
@@ -405,7 +421,7 @@ const ShowPost = ({navigation}) => {
             return {...p, comments: Math.max(0, (p.comments ?? 0) - 1)};
           }),
         );
-        showToast(data?.message || 'Comment deleted');
+        showToast(data?.status === 'RC200' ? (data?.message || 'Comment deleted') : 'Comment removed');
       } else if (data?.message) {
         showToast(data.message);
       } else {
@@ -520,6 +536,7 @@ const ShowPost = ({navigation}) => {
         const newComment = {
           id: data?.data?.id ?? Date.now(),
           parentId: parentId ?? null,
+          userId: userId,
           userName: currentUserName,
           userAvatar: null,
           text,
@@ -605,9 +622,13 @@ const ShowPost = ({navigation}) => {
     const id = raw.id ?? raw.comment_id ?? overrides.id;
     const resolvedParent =
       parentId != null && parentId !== '' ? parentId : null;
+    const u = raw.user ?? raw.userdata ?? raw ?? {};
+    const commentUserId = u.user_id ?? u.id ?? raw.user_id ?? raw.id ?? null;
+
     return {
       id,
       parentId: resolvedParent,
+      userId: commentUserId,
       userName:
         raw.user_name ??
         raw.userName ??
@@ -743,33 +764,29 @@ const ShowPost = ({navigation}) => {
             {/* <Text style={styles.userAction}>{item.action}</Text> */}
             <Text style={styles.timeAgo}>{formatTimeAgo(item.timeAgo)}</Text>
           </View>
-          <OptionsMenu
-            customButton={
-              <View style={styles.menuButton}>
-                <Icon name="more-horizontal" size={20} color={COLORS.black} />
-              </View>
-            }
-            options={['Delete', 'Edit','']}
-            actions={[
-              () => handleDeletePost(item.id),
-              () => {
-                navigation.navigate('AddQuestion', {
-                  editPost: true,
-                  postId: item.id,
-                  content: item.content,
-                  images: Array.isArray(item.images) ? item.images : [],
-                });
-              },
-              () => {  navigation.navigate('AddQuestion', {
-                editPost: true,
-                postId: item.id,
-                content: item.content,
-                images: Array.isArray(item.images) ? item.images : [],
-              });},
-              () => {},
-            ]}
-            destructiveIndex={0}
-          />
+          {String(item.userId) === String(userId) && (
+            <OptionsMenu
+              customButton={
+                <View style={styles.menuButton}>
+                  <Icon name="more-horizontal" size={20} color={COLORS.black} />
+                </View>
+              }
+              options={['Delete', 'Edit', 'Cancel']}
+              actions={[
+                () => handleDeletePost(item.id),
+                () => {
+                  navigation.navigate('AddQuestion', {
+                    editPost: true,
+                    postId: item.id,
+                    content: item.content,
+                    images: Array.isArray(item.images) ? item.images : [],
+                  });
+                },
+                () => {},
+              ]}
+              destructiveIndex={0}
+            />
+          )}
         </View>
 
         <View style={styles.contentSection}>
@@ -985,18 +1002,20 @@ const ShowPost = ({navigation}) => {
                             <Text style={styles.commentItemTime}>
                               {comment.timeAgo}
                             </Text>
-                            <TouchableOpacity
-                              style={styles.commentDeleteBtn}
-                              onPress={() => handleDeleteComment(item.id, comment.id)}
-                              disabled={
-                                deletingCommentKey === `${item.id}_${comment.id}`
-                              }>
-                              <Icon
-                                name="trash-2"
-                                size={14}
-                                color={COLORS.gray}
-                              />
-                            </TouchableOpacity>
+                            {String(comment.userId) === String(userId) && (
+                              <TouchableOpacity
+                                style={styles.commentDeleteBtn}
+                                onPress={() => handleDeleteComment(item.id, comment.id)}
+                                disabled={
+                                  deletingCommentKey === `${item.id}_${comment.id}`
+                                }>
+                                <Icon
+                                  name="trash-2"
+                                  size={14}
+                                  color={COLORS.gray}
+                                />
+                              </TouchableOpacity>
+                            )}
                           </View>
                           <Text style={styles.commentItemText}>{comment.text}</Text>
                           <View style={styles.commentEngagement}>
@@ -1067,18 +1086,20 @@ const ShowPost = ({navigation}) => {
                               <Text style={styles.commentItemTime}>
                                 {reply.timeAgo}
                               </Text>
-                              <TouchableOpacity
-                                style={styles.commentDeleteBtn}
-                                onPress={() => handleDeleteComment(item.id, reply.id)}
-                                disabled={
-                                  deletingCommentKey === `${item.id}_${reply.id}`
-                                }>
-                                <Icon
-                                  name="trash-2"
-                                  size={14}
-                                  color={COLORS.gray}
-                                />
-                              </TouchableOpacity>
+                              {String(reply.userId) === String(userId) && (
+                                <TouchableOpacity
+                                  style={styles.commentDeleteBtn}
+                                  onPress={() => handleDeleteComment(item.id, reply.id)}
+                                  disabled={
+                                    deletingCommentKey === `${item.id}_${reply.id}`
+                                  }>
+                                  <Icon
+                                    name="trash-2"
+                                    size={14}
+                                    color={COLORS.gray}
+                                  />
+                                </TouchableOpacity>
+                              )}
                             </View>
                             <Text style={styles.commentItemText}>{reply.text}</Text>
                           </View>

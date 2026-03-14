@@ -704,9 +704,13 @@ const MyTimeline = ({navigation}) => {
     const parentId = raw.parent_id ?? raw.parentId ?? raw.parent_comment_id ?? raw.reply_to_id ?? overrides.parentId;
     const id = raw.id ?? raw.comment_id ?? overrides.id;
     const resolvedParent = parentId != null && parentId !== '' ? parentId : null;
+    const u = raw.user ?? raw.userdata ?? raw ?? {};
+    const commentUserId = u.user_id ?? u.id ?? raw.user_id ?? raw.id ?? null;
+    
     return {
       id,
       parentId: resolvedParent,
+      userId: commentUserId,
       userName: raw.user_name ?? raw.userName ?? raw.user?.full_name ?? raw.user?.name ?? raw.user?.username ?? 'User',
       userAvatar: (getAvatarUrl(raw.user ?? raw, raw) || (raw.user_avatar ?? raw.userAvatar ?? null)),
       text: raw.comment ?? raw.text ?? raw.content ?? '',
@@ -785,7 +789,7 @@ const MyTimeline = ({navigation}) => {
         body: formdata,
       });
       const data = await res.json().catch(() => ({}));
-      if (data?.status === 'RC200') {
+      if (data?.status === 'RC200' || data?.message?.toLowerCase()?.includes('not found')) {
         setComments(prev => {
           const list = prev[postId] || [];
           const removedIds = new Set([String(commentId)]);
@@ -798,7 +802,7 @@ const MyTimeline = ({navigation}) => {
         setMyPosts(prev =>
           prev.map(p => (p.id !== postId ? p : {...p, comments: Math.max(0, (p.comments ?? 0) - 1)})),
         );
-        showToast(data?.message || 'Comment deleted');
+        showToast(data?.status === 'RC200' ? (data?.message || 'Comment deleted') : 'Comment removed');
       } else if (data?.message) {
         showToast(data.message);
       } else {
@@ -869,6 +873,7 @@ const MyTimeline = ({navigation}) => {
         const newComment = {
           id: data?.data?.id ?? Date.now(),
           parentId: parentId ?? null,
+          userId: userId,
           userName: currentUserName,
           userAvatar: null,
           text,
@@ -1205,28 +1210,30 @@ const MyTimeline = ({navigation}) => {
             <Text style={styles.userAction}>{item.action}</Text>
             <Text style={styles.timeAgo}>{item.timeAgo}</Text>
           </View>
-          <OptionsMenu
-            customButton={
-              <View style={styles.menuButton}>
-                <Icon name="more-horizontal" size={20} color={COLORS.black} />
-              </View>
-            }
-            options={['Edit', 'Delete','']}
-            actions={[
-             
-              () => {
-                navigation.navigate('AddQuestion', {
-                  editPost: true,
-                  postId: item.id,
-                  content: item.content,
-                  images: Array.isArray(item.images) ? item.images : [],
-                });
-              },
-              () => handleDeletePost(item.id),
-              () => {},
-            ]}
-            destructiveIndex={Platform.OS === 'ios' ? 1 : undefined}
-          />
+          {String(item.userId) === String(userId) && (
+            <OptionsMenu
+              customButton={
+                <View style={styles.menuButton}>
+                  <Icon name="more-horizontal" size={20} color={COLORS.black} />
+                </View>
+              }
+              options={['Edit', 'Delete','Cancel']}
+              actions={[
+              
+                () => {
+                  navigation.navigate('AddQuestion', {
+                    editPost: true,
+                    postId: item.id,
+                    content: item.content,
+                    images: Array.isArray(item.images) ? item.images : [],
+                  });
+                },
+                () => handleDeletePost(item.id),
+                () => {},
+              ]}
+              destructiveIndex={Platform.OS === 'ios' ? 1 : undefined}
+            />
+          )}
         </View>
         <View style={styles.contentSection}>
           <Text style={styles.postContent}>{item.content}</Text>
@@ -1420,12 +1427,14 @@ const MyTimeline = ({navigation}) => {
                           <View style={styles.commentItemHeader}>
                             <Text style={styles.commentItemUserName}>{comment.userName}</Text>
                             <Text style={styles.commentItemTime}>{comment.timeAgo}</Text>
-                            <TouchableOpacity
-                              style={styles.commentDeleteBtn}
-                              onPress={() => handleDeleteComment(item.id, comment.id)}
-                              disabled={deletingCommentKey === `${item.id}_${comment.id}`}>
-                              <Icon name="trash-2" size={14} color={COLORS.gray} />
-                            </TouchableOpacity>
+                            {String(comment.userId) === String(userId) && (
+                              <TouchableOpacity
+                                style={styles.commentDeleteBtn}
+                                onPress={() => handleDeleteComment(item.id, comment.id)}
+                                disabled={deletingCommentKey === `${item.id}_${comment.id}`}>
+                                <Icon name="trash-2" size={14} color={COLORS.gray} />
+                              </TouchableOpacity>
+                            )}
                           </View>
                           <Text style={styles.commentItemText}>{comment.text}</Text>
                           <View style={styles.commentEngagement}>
@@ -1459,12 +1468,14 @@ const MyTimeline = ({navigation}) => {
                             <View style={styles.commentItemHeader}>
                               <Text style={styles.commentItemUserName}>{reply.userName}</Text>
                               <Text style={styles.commentItemTime}>{reply.timeAgo}</Text>
-                              <TouchableOpacity
-                                style={styles.commentDeleteBtn}
-                                onPress={() => handleDeleteComment(item.id, reply.id)}
-                                disabled={deletingCommentKey === `${item.id}_${reply.id}`}>
-                                <Icon name="trash-2" size={14} color={COLORS.gray} />
-                              </TouchableOpacity>
+                              {String(reply.userId) === String(userId) && (
+                                <TouchableOpacity
+                                  style={styles.commentDeleteBtn}
+                                  onPress={() => handleDeleteComment(item.id, reply.id)}
+                                  disabled={deletingCommentKey === `${item.id}_${reply.id}`}>
+                                  <Icon name="trash-2" size={14} color={COLORS.gray} />
+                                </TouchableOpacity>
+                              )}
                             </View>
                             <Text style={styles.commentItemText}>{reply.text}</Text>
                           </View>
@@ -1552,7 +1563,7 @@ const MyTimeline = ({navigation}) => {
                 <Text style={styles.timeAgo}>{item.timeAgo}</Text>
               </View>
             </View>
-            {(activeTab === 'my_questions' || item.userId === userId) ? (
+            {(activeTab === 'my_questions' || String(item.userId) === String(userId)) ? (
               <TouchableOpacity
                 style={{padding: 4}}
                 onPress={() => handleDeleteQuestion(item.id)}
