@@ -1,51 +1,96 @@
 buildscript {
     ext {
-        buildToolsVersion = "34.0.0"
+        buildToolsVersion = "35.0.0"
         minSdkVersion = 28
         compileSdkVersion = 35
         targetSdkVersion = 35
-        ndkVersion = "26.1.10909125"
-        kotlinVersion = "1.9.22"
+        // RN 0.77 template NDK — works with 16 KB + Hermes prebuilts
+        ndkVersion = "27.1.12297006"
+        kotlinVersion = "2.0.21"
     }
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:8.6.0")
+        classpath("com.android.tools.build:gradle")
         classpath("com.facebook.react:react-native-gradle-plugin")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+        classpath("com.google.gms:google-services:4.4.2")
         classpath("com.google.firebase:firebase-crashlytics-gradle:2.9.9")
-        classpath 'com.google.gms:google-services:4.4.2'                //firebase
     }
 }
 
-allprojects {
-    configurations.all {
-        resolutionStrategy {
-            force 'androidx.browser:browser:1.8.0'
+apply plugin: "com.facebook.react.rootproject"
+
+// RN 0.77 pins AGP 8.7.x + compileSdk 35; some deps (e.g. Stripe) pull androidx 1.17 / browser 1.10
+// which require compileSdk 36 + AGP 8.9+. Keep a compatible androidx set until RN bumps AGP.
+subprojects { subproject ->
+    subproject.configurations.configureEach { config ->
+        config.resolutionStrategy {
+            // 1.15.x avoids 1.17+ (needs compileSdk 36). 1.16 works with compileSdk 35; image-crop-picker 0.51 pulls 1.16.
+            force "androidx.core:core:1.16.0"
+            force "androidx.core:core-ktx:1.16.0"
+            force "androidx.browser:browser:1.8.0"
         }
     }
 }
 
+// Lint vital can crash (AGP/Lint bug on Kotlin) or fail on deps (e.g. Stripe). Skip lintVital* so release builds complete.
 subprojects { subproject ->
-    subproject.afterEvaluate {
+    def disableLintVital = {
+        subproject.tasks.configureEach { task ->
+            if (task.name.contains("lintVital")) {
+                task.enabled = false
+            }
+        }
+    }
+    if (subproject.state.executed) {
+        disableLintVital()
+    } else {
+        subproject.afterEvaluate { disableLintVital() }
+    }
+}
+
+// 16 KB CMake flags for native modules (Reanimated, etc.)
+// Use executed-check: with RN 0.77 + AGP 8.10, plain afterEvaluate can run too late.
+subprojects { subproject ->
+    def patch16k = {
         def android = subproject.extensions.findByName('android')
         if (android != null && android.defaultConfig != null) {
             def externalNativeBuild = android.defaultConfig.externalNativeBuild
-            if (externalNativeBuild != null && externalNativeBuild.cmake != null) {
-                def args = externalNativeBuild.cmake.arguments
-                if (args != null && !args.any { it?.toString()?.startsWith('-DCMAKE_SHARED_LINKER_FLAGS=') }) {
-                    args.addAll([
-                        '-DCMAKE_SHARED_LINKER_FLAGS=-Wl,-z,max-page-size=16384',
-                        '-DCMAKE_MODULE_LINKER_FLAGS=-Wl,-z,max-page-size=16384',
-                        '-DCMAKE_EXE_LINKER_FLAGS=-Wl,-z,max-page-size=16384'
-                    ])
+            if (externalNativeBuild != null) {
+                if (externalNativeBuild.cmake != null) {
+                    def args = externalNativeBuild.cmake.arguments
+                    if (args != null) {
+                        if (!args.any { it?.toString()?.contains('ANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES') }) {
+                            args.add('-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON')
+                        }
+                        if (!args.any { it?.toString()?.startsWith('-DCMAKE_SHARED_LINKER_FLAGS=') }) {
+                            args.addAll([
+                                '-DCMAKE_SHARED_LINKER_FLAGS=-Wl,-z,max-page-size=16384',
+                                '-DCMAKE_MODULE_LINKER_FLAGS=-Wl,-z,max-page-size=16384',
+                                '-DCMAKE_EXE_LINKER_FLAGS=-Wl,-z,max-page-size=16384'
+                            ])
+                        }
+                    }
+                    def cppFlags = externalNativeBuild.cmake.cppFlags
+                    if (cppFlags != null && !cppFlags.toString().contains('max-page-size=16384')) {
+                        cppFlags += " -Wl,-z,max-page-size=16384"
+                    }
+                }
+                if (externalNativeBuild.ndkBuild != null) {
+                    def ndkArgs = externalNativeBuild.ndkBuild.arguments
+                    if (ndkArgs != null && !ndkArgs.any { it?.toString()?.contains('max-page-size=16384') }) {
+                        ndkArgs.add('APP_LDFLAGS+=-Wl,-z,max-page-size=16384')
+                    }
                 }
             }
         }
     }
+    if (subproject.state.executed) {
+        patch16k()
+    } else {
+        subproject.afterEvaluate { patch16k() }
+    }
 }
-
-
-apply plugin: "com.facebook.react.rootproject"

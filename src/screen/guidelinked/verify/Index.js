@@ -399,6 +399,8 @@ const EmailVerifyIndex = ({navigation, route}) => {
       <Modal
         visible={showDialog}
         transparent={true}
+        statusBarTranslucent={true}
+        presentationStyle="overFullScreen"
         animationType="slide"
         onRequestClose={bottomDialog}>
         <View style={DefaultStyle.modalContentBottomDialog}>
@@ -584,6 +586,8 @@ const EmailVerifyIndex = ({navigation, route}) => {
 
       <Modal
         visible={showDeleteDialog}
+        statusBarTranslucent={true}
+        presentationStyle="overFullScreen"
         transparent={true}
         animationType="slide"
         onRequestClose={deleteDialog}>

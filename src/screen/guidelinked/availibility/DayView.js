@@ -98,6 +98,8 @@ const DayView = ({navigation, data, onDeleteComplete, index}) => {
         {showDeletePopup && <Modal
             visible={showDeletePopup}
             transparent={true}
+            statusBarTranslucent={true}
+            presentationStyle="overFullScreen"
             animationType="slide"
             onRequestClose={()=>{
                 setShowDeletePopup(false)

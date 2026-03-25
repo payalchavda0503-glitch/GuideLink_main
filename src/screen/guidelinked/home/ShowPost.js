@@ -1217,6 +1217,8 @@ const ShowPost = ({navigation}) => {
       {/* Likes List Modal */}
       <Modal
         visible={likesModalVisible}
+        statusBarTranslucent={true}
+        presentationStyle="overFullScreen"
         transparent
         animationType="fade"
         onRequestClose={() => setLikesModalVisible(false)}>
@@ -1274,7 +1276,9 @@ const ShowPost = ({navigation}) => {
       {/* Aura List Modal */}
       <Modal
         visible={auraModalVisible}
-        transparent
+        transparent 
+        statusBarTranslucent={true}
+        presentationStyle="overFullScreen"
         animationType="fade"
         onRequestClose={() => setAuraModalVisible(false)}>
         <TouchableOpacity
@@ -1332,6 +1336,8 @@ const ShowPost = ({navigation}) => {
       <Modal
         visible={imageModalVisible}
         transparent
+        statusBarTranslucent={true}
+        presentationStyle="overFullScreen"
         animationType="fade"
         onRequestClose={() => setImageModalVisible(false)}>
         <TouchableOpacity

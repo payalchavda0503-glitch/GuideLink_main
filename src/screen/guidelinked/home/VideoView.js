@@ -19,7 +19,7 @@ const VideoView = ({visible, title, onClose, vid}) => {
   const [loading, setLoading] = useState(true);
 
   return (
-    <Modal visible={visible} transparent={false} animationType="slide">
+    <Modal visible={visible} transparent={false} animationType="slide" statusBarTranslucent={true} presentationStyle="overFullScreen">
       <SafeAreaView style={styles.container}>
         {/* Header */}
         <View style={styles.header}>

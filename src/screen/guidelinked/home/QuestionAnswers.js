@@ -72,6 +72,7 @@ const QuestionAnswers = ({navigation}) => {
   const [unlockedPaidAnswerKeys, setUnlockedPaidAnswerKeys] = useState({});
   const [answersExpandedByQuestion, setAnswersExpandedByQuestion] = useState({});
   const [paidAnswerRate, setPaidAnswerRate] = useState(null);
+  const [stripeOnboardingStatus, setStripeOnboardingStatus] = useState(null);
   const [userId, setUserId] = useState(null);
   const [deletingGuidanceId, setDeletingGuidanceId] = useState(null);
   const token = useSelector(s => s.AuthSlice?.token);
@@ -161,8 +162,14 @@ const QuestionAnswers = ({navigation}) => {
   const fetchProfile = async () => {
     try {
       const res = await Api.get(API_GET_PROFILE);
-      if (res?.status === 'RC200' && res?.data?.id != null) {
-        setUserId(Number(res.data.id));
+      if (res?.status === 'RC200' && res?.data) {
+        if (res?.data?.id != null) {
+          setUserId(Number(res.data.id));
+        }
+        console.log('res?.data?.stripe_onboarding_status', res?.data?.stripe_onboarding_status);
+        setStripeOnboardingStatus(
+          res?.data?.stripe_onboarding_status  ?? null,
+        );
       }
     } catch (e) {
       log('Failed to fetch profile');
@@ -802,6 +809,8 @@ const QuestionAnswers = ({navigation}) => {
   const parsedPaidAnswerRate = Number(paidAnswerRate);
   const isPaidAnswerRateZero =
     !Number.isFinite(parsedPaidAnswerRate) || parsedPaidAnswerRate <= 0;
+  const canUsePaidAnswersAsGuide =
+  stripeOnboardingStatus != Number("-1") ? true : false;
 
   const renderQuestionItem = ({item}) => {
     const freeCount = item.freeAnswers ?? 0;
@@ -1108,6 +1117,8 @@ const QuestionAnswers = ({navigation}) => {
       <Modal
         visible={categoryModalVisible}
         transparent={true}
+        statusBarTranslucent={true}
+        presentationStyle="overFullScreen"
         animationType="fade"
         onRequestClose={() => setCategoryModalVisible(false)}>
         <TouchableOpacity
@@ -1157,6 +1168,8 @@ const QuestionAnswers = ({navigation}) => {
         visible={answerModalVisible}
         transparent={true}
         animationType="slide"
+        statusBarTranslucent={true}
+        presentationStyle="overFullScreen"
         onRequestClose={() => {
           setAnswerModalVisible(false);
           setSelectedQuestion(null);
@@ -1231,6 +1244,15 @@ const QuestionAnswers = ({navigation}) => {
                   numberOfLines={8}
                   textAlignVertical="top"
                 />
+              ) : !canUsePaidAnswersAsGuide ? (
+                <View style={styles.paidAnswerInfoContainer}>
+                  <Text style={styles.paidAnswerInfoText}>
+                    This facility is available only for our Guides. As a user,
+                    you cannot make any Paid Answers. If you wish to earn by
+                    making Paid answers, please follow the process of becoming
+                    a Guide.
+                  </Text>
+                </View>
               ) : isPaidAnswerRateZero ? (
                 <View style={styles.paidAnswerInfoContainer}>
                   <Text style={styles.paidAnswerInfoText}>
@@ -1281,6 +1303,12 @@ const QuestionAnswers = ({navigation}) => {
                     });
                   }
                 } else {
+                  if (!canUsePaidAnswersAsGuide) {
+                    setAnswerModalVisible(false);
+                    setSelectedQuestion(null);
+                    navigation.navigate('ProfileTabIndex', {guide: true});
+                    return;
+                  }
                   if (isPaidAnswerRateZero) {
                     setAnswerModalVisible(false);
                     setSelectedQuestion(null);
@@ -1300,7 +1328,11 @@ const QuestionAnswers = ({navigation}) => {
                 }
               }}>
               <Text style={styles.modalButtonText}>
-                {answerSubmitting ? 'Adding…' : 'Add Answer'}
+                {answerTab === 'paid' && !canUsePaidAnswersAsGuide
+                  ? 'Become a Guide'
+                  : answerSubmitting
+                    ? 'Adding…'
+                    : 'Add Answer'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -1718,6 +1750,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingHorizontal: 16,
   },
   modalBackdrop: {
     position: 'absolute',
@@ -1725,7 +1759,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'transparent',
   },
   modalContainer: {
     width: '90%',
@@ -1733,6 +1767,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderRadius: 12,
     padding: 20,
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.25,
@@ -1783,6 +1818,7 @@ const styles = StyleSheet.create({
   modalContentContainer: {
     minHeight: 280,
     marginBottom: 20,
+    backgroundColor: COLORS.white,
   },
   paidAnswerContainer: {
     flex: 1,

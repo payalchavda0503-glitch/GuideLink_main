@@ -811,7 +811,7 @@ const BookingIndex = ({navigation}) => {
         setLoaderVisible={setLoaderVisible}
       />
 
-      <Modal visible={modalVisible} transparent={true} animationType="slide">
+      <Modal visible={modalVisible} transparent={true} animationType="slide" statusBarTranslucent={true} presentationStyle="overFullScreen">
         <View style={[DefaultStyle.modalContentCenterDialog]}>
           <View style={[DefaultStyle.modalContent]}>
             <Pressable

@@ -20,6 +20,8 @@ export const CustomLogoutDialog = ({visible, onClose, onLogout}) => {
   return (
     <Modal
       visible={visible}
+       statusBarTranslucent={true}
+        presentationStyle="overFullScreen"
       transparent={true}
       animationType="slide"
       onRequestClose={onClose}>
@@ -90,6 +92,8 @@ export const CustomApptDialogCancel = ({visible, onClose, onConfirm}) => {
       visible={visible}
       transparent={true}
       animationType="slide"
+      statusBarTranslucent={true}
+      presentationStyle="overFullScreen"
       onRequestClose={onClose}>
       <View style={[DefaultStyle.modalContentBottomDialog]}>
         <View style={[DefaultStyle.modalContentDialog]}>
@@ -158,6 +162,8 @@ export const CustomDialogVerifyEmail = ({visible, onClose, emailList}) => {
       visible={visible}
       transparent={true}
       animationType="slide"
+      statusBarTranslucent={true}
+      presentationStyle="overFullScreen"
       onRequestClose={onClose}>
       <View style={[DefaultStyle.modalContentCenterDialog]}>
         <View style={[DefaultStyle.modalContent]}>
@@ -214,6 +220,8 @@ export const UploadPhotoDialog = ({
       visible={visible}
       transparent={true}
       animationType="slide"
+      statusBarTranslucent={true}
+      presentationStyle="overFullScreen"
       onRequestClose={onClose}>
       <View style={DefaultStyle.modalContentBottomDialog}>
         <View style={DefaultStyle.modalContentDialog}>
@@ -277,6 +285,8 @@ export const CustomSmsDialog = ({visible, onClose, onYes}) => {
       visible={visible}
       transparent={true}
       animationType="slide"
+      statusBarTranslucent={true}
+      presentationStyle="overFullScreen"
       onRequestClose={onClose}>
       <View style={[DefaultStyle.modalContentCenterDialog]}>
         <View style={[DefaultStyle.modalContent]}>
@@ -338,6 +348,8 @@ export const CustomApptDialogRaisComplaint = ({
       visible={visible}
       transparent={true}
       animationType="slide"
+      statusBarTranslucent={true}
+      presentationStyle="overFullScreen"
       onRequestClose={onClose}>
       <View style={[DefaultStyle.modalContentBottomDialog]}>
         <KeyboardAvoidingView
@@ -532,6 +544,8 @@ export const CustomDialogRating = ({
       visible={visible}
       transparent={true}
       animationType="slide"
+      statusBarTranslucent={true}
+      presentationStyle="overFullScreen"
       onRequestClose={onClose}>
       <View style={[DefaultStyle.modalContentBottomDialog]}>
         <KeyboardAvoidingView
@@ -658,6 +672,8 @@ export const CustomDeleteDialog = ({visible, onClose, onDelete}) => {
       visible={visible}
       transparent={true}
       animationType="slide"
+      statusBarTranslucent={true}
+      presentationStyle="overFullScreen"
       onRequestClose={onClose}>
       <View style={[DefaultStyle.modalContentCenterDialog]}>
         <View style={[DefaultStyle.modalContent]}>
@@ -710,6 +726,8 @@ export const CustomDeleteDialogComp = ({visible, onClose, onDelete, text}) => {
       visible={visible}
       transparent={true}
       animationType="slide"
+      statusBarTranslucent={true}
+      presentationStyle="overFullScreen"
       onRequestClose={onClose}>
       <View style={[DefaultStyle.modalContentCenterDialog]}>
         <View style={[DefaultStyle.modalContent]}>
@@ -762,6 +780,8 @@ export const CustomCancelTimeSlotDialog = ({
       visible={visible}
       transparent={true}
       animationType="slide"
+      statusBarTranslucent={true}
+      presentationStyle="overFullScreen"
       onRequestClose={onClose}>
       <View style={[DefaultStyle.modalContentCenterDialog]}>
         <View style={[DefaultStyle.modalContent]}>

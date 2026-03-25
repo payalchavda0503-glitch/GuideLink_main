@@ -751,6 +751,8 @@ const HomeIndex = ({navigation}) => {
       <Modal
         transparent
         visible={isFilterVisible}
+        statusBarTranslucent={true}
+        presentationStyle="overFullScreen"
         animationType="fade"
         onRequestClose={() => setFilterVisible(false)}>
         <View

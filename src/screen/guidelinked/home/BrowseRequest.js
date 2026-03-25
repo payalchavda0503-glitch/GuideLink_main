@@ -475,6 +475,8 @@ const RequestGuidanceScreen = ({navigation}) => {
       <Modal
         visible={pokePopup}
         animationType="slide"
+        statusBarTranslucent={true}
+        presentationStyle="overFullScreen"
         transparent={true}
         onRequestClose={() => setPokePopup(false)}>
         <View style={styles.modalContentCenterDialog}>

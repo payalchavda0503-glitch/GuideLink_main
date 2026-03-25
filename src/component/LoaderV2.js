@@ -6,8 +6,10 @@ const LoaderV2 = props => {
   return props.loaderVisible ? (
     <Modal
       animationType="fade"
+
       transparent={true}
-      statusBarTranslucent
+      statusBarTranslucent={true}
+      presentationStyle="overFullScreen"
       visible={props.loaderVisible}>
       <View style={styles.centeredView}>
         <View style={styles.modalView}>

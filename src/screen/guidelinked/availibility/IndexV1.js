@@ -499,6 +499,8 @@ import {
                   <Modal
                       visible={isCancelTimeSlot}
                       transparent={true}
+                      statusBarTranslucent={true}
+                      presentationStyle="overFullScreen"
                       animationType="slide"
                       onRequestClose={()=>{
                         isCancelTimeSlotDialog()

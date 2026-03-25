@@ -104,6 +104,7 @@ const MyTimeline = ({navigation}) => {
   const [unlockedPaidAnswerKeys, setUnlockedPaidAnswerKeys] = useState({});
   const [answersExpandedByQuestion, setAnswersExpandedByQuestion] = useState({});
   const [paidAnswerRate, setPaidAnswerRate] = useState(null);
+  const [stripeOnboardingStatus, setStripeOnboardingStatus] = useState(null);
 
   const isAnswersExpanded = (questionId) =>
     answersExpandedByQuestion[questionId] === true;
@@ -118,9 +119,15 @@ const MyTimeline = ({navigation}) => {
   const fetchProfile = async () => {
     try {
       const res = await Api.get(API_GET_PROFILE);
-      if (res?.status === 'RC200' && res?.data?.id != null) {
-        setUserId(Number(res.data.id));
-        return Number(res.data.id);
+      if (res?.status === 'RC200' && res?.data) {
+        if (res?.data?.id != null) {
+          setUserId(Number(res.data.id));
+        }
+        console.log('res?.data?.stripe_onboarding_status', res?.data?.stripe_onboarding_status);
+        setStripeOnboardingStatus(
+          res?.data?.stripe_onboarding_status ?? null,
+        );
+        return res?.data?.id != null ? Number(res.data.id) : null;
       }
     } catch (e) {
       log('Failed to load profile');
@@ -1172,6 +1179,8 @@ const MyTimeline = ({navigation}) => {
   const parsedPaidAnswerRate = Number(paidAnswerRate);
   const isPaidAnswerRateZero =
     !Number.isFinite(parsedPaidAnswerRate) || parsedPaidAnswerRate <= 0;
+    const canUsePaidAnswersAsGuide =
+    stripeOnboardingStatus != Number("-1") ? true : false;
 
   const data =
     activeTab === 'my_post'
@@ -1850,6 +1859,8 @@ const MyTimeline = ({navigation}) => {
 
       <Modal
         visible={likesModalVisible}
+        statusBarTranslucent={true}
+        presentationStyle="overFullScreen"
         transparent
         animationType="fade"
         onRequestClose={() => setLikesModalVisible(false)}>
@@ -1896,6 +1907,8 @@ const MyTimeline = ({navigation}) => {
       <Modal
         visible={auraModalVisible}
         transparent
+        statusBarTranslucent={true}
+        presentationStyle="overFullScreen"
         animationType="fade"
         onRequestClose={() => setAuraModalVisible(false)}>
         <TouchableOpacity
@@ -1948,6 +1961,8 @@ const MyTimeline = ({navigation}) => {
         visible={answerModalVisible}
         transparent
         animationType="slide"
+        statusBarTranslucent={true}
+        presentationStyle="overFullScreen"
         onRequestClose={() => {
           setAnswerModalVisible(false);
           setSelectedQuestion(null);
@@ -2000,6 +2015,15 @@ const MyTimeline = ({navigation}) => {
                   numberOfLines={8}
                   textAlignVertical="top"
                 />
+              ) : !canUsePaidAnswersAsGuide ? (
+                <View style={styles.answerModalPaidInfoContainer}>
+                  <Text style={styles.answerModalPaidInfoText}>
+                    This facility is available only for our Guides. As a user,
+                    you cannot make any Paid Answers. If you wish to earn by
+                    making Paid answers, please follow the process of becoming
+                    a Guide.
+                  </Text>
+                </View>
               ) : isPaidAnswerRateZero ? (
                 <View style={styles.answerModalPaidInfoContainer}>
                   <Text style={styles.answerModalPaidInfoText}>
@@ -2049,6 +2073,12 @@ const MyTimeline = ({navigation}) => {
                     });
                   }
                 } else {
+                  if (!canUsePaidAnswersAsGuide) {
+                    setAnswerModalVisible(false);
+                    setSelectedQuestion(null);
+                    navigation.navigate('ProfileTabIndex', {guide: true});
+                    return;
+                  }
                   if (isPaidAnswerRateZero) {
                     setAnswerModalVisible(false);
                     setSelectedQuestion(null);
@@ -2068,7 +2098,11 @@ const MyTimeline = ({navigation}) => {
                 }
               }}>
               <Text style={styles.answerModalButtonText}>
-                {answerSubmitting ? 'Adding…' : 'Add Answer'}
+                {answerTab === 'paid' && !canUsePaidAnswersAsGuide
+                  ? 'Become a Guide'
+                  : answerSubmitting
+                    ? 'Adding…'
+                    : 'Add Answer'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -2078,6 +2112,8 @@ const MyTimeline = ({navigation}) => {
       <Modal
         visible={imageModalVisible}
         transparent
+        statusBarTranslucent={true}
+        presentationStyle="overFullScreen"
         animationType="fade"
         onRequestClose={() => setImageModalVisible(false)}>
         <TouchableOpacity
@@ -2813,6 +2849,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingHorizontal: 16,
   },
   answerModalBackdrop: {
     position: 'absolute',
@@ -2820,7 +2858,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'transparent',
   },
   answerModalContainer: {
     width: '90%',
@@ -2828,6 +2866,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderRadius: 12,
     padding: 20,
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.25,
@@ -2878,6 +2917,7 @@ const styles = StyleSheet.create({
   answerModalContent: {
     minHeight: 280,
     marginBottom: 20,
+    backgroundColor: COLORS.white,
   },
   answerModalPaidInfoContainer: {
     paddingVertical: 20,
