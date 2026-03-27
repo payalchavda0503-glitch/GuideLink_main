@@ -45,9 +45,14 @@ import images from '../../../util/IMGLIST';
 import {log, showToast} from '../../../util/Toast';
 import OptionsMenu from 'react-native-option-menu';
 
+const POSTS_PAGE_SIZE = 50;
+
 const ShowPost = ({navigation}) => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [postsPage, setPostsPage] = useState(1);
+  const [postsHasMore, setPostsHasMore] = useState(true);
+  const [postsLoadingMore, setPostsLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [openCommentsId, setOpenCommentsId] = useState(null);
   const [commentTexts, setCommentTexts] = useState({});
@@ -232,28 +237,42 @@ const ShowPost = ({navigation}) => {
     };
   };
 
-  const fetchPosts = async () => {
+  const fetchPosts = async (page = 1, append = false) => {
     try {
-      setLoading(true);
-      const res = await Api.get(API_TIMELINE_POST_GET);
-      setLoading(false);
+      if (!append) setLoading(true);
+      else setPostsLoadingMore(true);
+
+      const res = await Api.get(`${API_TIMELINE_POST_GET}?page=${page}`);
       const list = res?.data?.data;
       console.log('timeline-post/get_posts data.data:', list);
       if (res?.status === 'RC200' && Array.isArray(list)) {
-        setPosts(list.map(mapPostFromApi));
+        const mapped = list.map(mapPostFromApi);
+        setPosts(prev =>
+          append ? [...(prev ?? []), ...mapped] : mapped,
+        );
+        setPostsPage(page);
+        // API may return fewer items than POSTS_PAGE_SIZE per page.
+        // So "has more" should be true as long as server returned some posts.
+        setPostsHasMore(mapped.length > 0);
       } else {
-        setPosts([]);
+        if (!append) setPosts([]);
+        setPostsHasMore(false);
       }
     } catch (error) {
       log('Failed to load posts');
-      setLoading(false);
-      setPosts([]);
+      if (!append) setPosts([]);
+      setPostsHasMore(false);
     }
+
+    if (!append) setLoading(false);
+    else setPostsLoadingMore(false);
   };
 
   const handleRefresh = () => {
     setRefreshing(true);
-    fetchPosts().finally(() => setRefreshing(false));
+    setPostsPage(1);
+    setPostsHasMore(true);
+    fetchPosts(1, false).finally(() => setRefreshing(false));
   };
 
   const handleLike = async (postId, currentlyLiked) => {
@@ -1201,11 +1220,25 @@ const ShowPost = ({navigation}) => {
             showsVerticalScrollIndicator={false}
             refreshing={refreshing}
             onRefresh={handleRefresh}
+            onEndReached={() => {
+              if (postsLoadingMore) return;
+              if (!postsHasMore) return;
+              if (loading || refreshing) return;
+              fetchPosts(postsPage + 1, true);
+            }}
+            onEndReachedThreshold={0.5}
             ItemSeparatorComponent={() => <View style={styles.separator} />}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
                 <Text style={styles.emptySubtext}>Start with adding a feed.</Text>
               </View>
+            }
+            ListFooterComponent={
+              postsLoadingMore ? (
+                <View style={{paddingVertical: 16}}>
+                  <ActivityIndicator size="small" color={COLORS.primary} />
+                </View>
+              ) : null
             }
           />
         )}

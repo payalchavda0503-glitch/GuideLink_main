@@ -53,9 +53,11 @@ const QuestionAnswers = ({navigation}) => {
   const [questionsLoading, setQuestionsLoading] = useState(false);
   const [questionsLoadingMore, setQuestionsLoadingMore] = useState(false);
   const [questionsPage, setQuestionsPage] = useState(1);
-  const [questionsLastPage, setQuestionsLastPage] = useState(1);
+  // If backend doesn't return `last_page`, keep this as null so pagination can still continue.
+  const [questionsLastPage, setQuestionsLastPage] = useState(null);
   const [questionsHasMore, setQuestionsHasMore] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const questionsPageRef = useRef(1);
   const [categoryValue, setCategoryValue] = useState('all_guides');
   const [categoryItems, setCategoryItems] = useState(defaultCategories);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
@@ -226,6 +228,10 @@ const QuestionAnswers = ({navigation}) => {
       fetchProfile();
     }, []),
   );
+
+  useEffect(() => {
+    questionsPageRef.current = questionsPage;
+  }, [questionsPage]);
 
   useEffect(() => {
     const valueInItems = categoryItems.some(it => String(it.value) === String(categoryValue));
@@ -686,7 +692,9 @@ const QuestionAnswers = ({navigation}) => {
       } else {
         setQuestionsLoadingMore(true);
       }
-      let url = `${API_GET_GUIDANCE_DATA}?page=${pageNo}&limit=${QUESTIONS_PAGE_SIZE}`;
+      // Use example style pagination: page + optional category only.
+      // (Backend can apply its own default limit.)
+      let url = `${API_GET_GUIDANCE_DATA}?page=${pageNo}`;
       if (categoryValue !== 'all_guides') {
         url += `&category=${encodeURIComponent(String(categoryValue || ''))}`;
       }
@@ -695,7 +703,13 @@ const QuestionAnswers = ({navigation}) => {
       else setQuestionsLoadingMore(false);
       const raw = res?.data?.data ?? [];
       console.log("raw11111111",raw[1]?.answers[1])
-      const lastPage = res?.data?.last_page ?? 1;
+      const lastPageFromApi = res?.data?.last_page ?? null;
+      const lastPage = Number.isFinite(Number(lastPageFromApi))
+        ? Number(lastPageFromApi)
+        : null;
+      if (pageNo === 1 && lastPage == null) {
+        setQuestionsLastPage(null);
+      }
       if (pageNo === 1) {
         const rate = extractPaidAnswerRate(res?.data, raw);
         console.log('QuestionAnswers paid answer rate (using per_answer_price):', {
@@ -711,15 +725,15 @@ const QuestionAnswers = ({navigation}) => {
       }
       if (res?.status === 'RC200' && Array.isArray(raw)) {
         const mapped = raw.map(mapQuestionFromApi);
-        setQuestionsLastPage(lastPage);
+        if (lastPage != null) setQuestionsLastPage(lastPage);
         if (pageNo === 1) {
           setQuestions(mapped);
         } else {
           setQuestions(prev => [...prev, ...mapped]);
         }
-        if (raw.length < QUESTIONS_PAGE_SIZE || pageNo >= lastPage) {
-          setQuestionsHasMore(false);
-        }
+        // Keep pagination going even if backend returns a misleading `last_page`.
+        // We stop only when the server returns an empty page.
+        setQuestionsHasMore(raw.length > 0);
       } else {
         if (pageNo === 1) setQuestions([]);
         setQuestionsHasMore(false);
@@ -734,14 +748,20 @@ const QuestionAnswers = ({navigation}) => {
   };
 
   const fetchMoreQuestions = () => {
+    console.log('onEndReached fetchMoreQuestions', {
+      questionsPageRef: questionsPageRef.current,
+      questionsPage,
+      questionsHasMore,
+      questionsLastPage,
+      questionsLoadingMore,
+    });
     if (
       questionsLoadingMore ||
-      !questionsHasMore ||
-      questionsPage >= questionsLastPage
+      !questionsHasMore
     ) {
       return;
     }
-    const next = questionsPage + 1;
+    const next = questionsPageRef.current + 1;
     setQuestionsPage(next);
     fetchQuestions(next);
   };
@@ -749,6 +769,7 @@ const QuestionAnswers = ({navigation}) => {
   const handleRefresh = () => {
     setRefreshing(true);
     setQuestionsPage(1);
+    setQuestionsLastPage(null);
     setQuestionsHasMore(true);
     fetchQuestions(1).finally(() => setRefreshing(false));
   };

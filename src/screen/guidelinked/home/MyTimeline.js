@@ -33,6 +33,7 @@ import {
   API_GET_GUIDANCE_MY_ANSWER_QUESTION,
   API_DELETE_GUIDANCE_REQUEST,
   API_TIMELINE_POST_GET_MY_POSTS,
+  API_TIMELINE_POST_GET,
   API_TIMELINE_POST_LIKE,
   API_TIMELINE_POST_AURA,
   API_TIMELINE_POST_DELETE,
@@ -65,8 +66,17 @@ const MyTimeline = ({navigation}) => {
   const [activeTab, setActiveTab] = useState('my_post'); // 'my_post' | 'my_questions' | 'my_answers'
   const [userId, setUserId] = useState(null);
   const [myPosts, setMyPosts] = useState([]);
+  const [postsPage, setPostsPage] = useState(1);
+  const [postsHasMore, setPostsHasMore] = useState(true);
+  const [postsLoadingMore, setPostsLoadingMore] = useState(false);
   const [myQuestions, setMyQuestions] = useState([]);
+  const [questionsPage, setQuestionsPage] = useState(1);
+  const [questionsHasMore, setQuestionsHasMore] = useState(true);
+  const [questionsLoadingMore, setQuestionsLoadingMore] = useState(false);
   const [myAnswers, setMyAnswers] = useState([]);
+  const [answersPage, setAnswersPage] = useState(1);
+  const [answersHasMore, setAnswersHasMore] = useState(true);
+  const [answersLoadingMore, setAnswersLoadingMore] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -169,17 +179,30 @@ const MyTimeline = ({navigation}) => {
     return v.startsWith('/') ? `${base}${v}` : `${base}/${v}`;
   };
 
-  const fetchMyPosts = async () => {
+  const fetchMyPosts = async (page = 1, append = false) => {
+    if (append) setPostsLoadingMore(true);
     try {
-      const res = await Api.get(API_TIMELINE_POST_GET_MY_POSTS);
+      // Pagination for Posts tab:
+      // timeline-post/get_posts?page=1,2...
+      // NOTE: backend may ignore page if not required; still safe.
+      const res = await Api.get(`${API_TIMELINE_POST_GET_MY_POSTS}?page=${page}`);
       const list = res?.data?.data;
       if (res?.status === 'RC200' && Array.isArray(list)) {
-        setMyPosts(list.map(normalizePost));
+        const next = list.map(normalizePost);
+        setMyPosts(prev => (append ? [...(prev ?? []), ...next] : next));
+        setPostsPage(page);
+        // API may return fewer than QUESTIONS_PAGE_SIZE per page.
+        // Treat "has more" as true when server returned any posts.
+        setPostsHasMore(next.length > 0);
       } else {
-        setMyPosts([]);
+        if (!append) setMyPosts([]);
+        setPostsHasMore(false);
       }
     } catch (e) {
-      setMyPosts([]);
+      if (!append) setMyPosts([]);
+      setPostsHasMore(false);
+    } finally {
+      if (append) setPostsLoadingMore(false);
     }
   };
 
@@ -1066,25 +1089,46 @@ const MyTimeline = ({navigation}) => {
     };
   };
 
-  const fetchMyQuestions = async () => {
+  const fetchMyQuestions = async (page = 1, append = false) => {
+    if (append) setQuestionsLoadingMore(true);
     try {
-      const res = await Api.get(API_GET_GUIDANCE_MY_QUESTIONS);
+      // Example pagination:
+      // guidance/get_my_question?page=1
+      const res = await Api.get(
+        `${API_GET_GUIDANCE_MY_QUESTIONS}?page=${page}`,
+      );
       const list = res?.data?.data ?? res?.data ?? [];
       const rawList = Array.isArray(list) ? list : [];
-      setMyQuestions(rawList.map(mapQuestionFromApi));
+      const mapped = rawList.map(mapQuestionFromApi);
+      setMyQuestions(prev => (append ? [...(prev ?? []), ...mapped] : mapped));
+      setQuestionsPage(page);
+      // Stop only when server returns empty page
+      setQuestionsHasMore(rawList.length > 0);
     } catch (e) {
-      setMyQuestions([]);
+      if (!append) setMyQuestions([]);
+      setQuestionsHasMore(false);
+    } finally {
+      if (append) setQuestionsLoadingMore(false);
     }
   };
 
-  const fetchMyAnswers = async () => {
+  const fetchMyAnswers = async (page = 1, append = false) => {
+    if (append) setAnswersLoadingMore(true);
     try {
-      const res = await Api.get(API_GET_GUIDANCE_MY_ANSWER_QUESTION);
+      const res = await Api.get(
+        `${API_GET_GUIDANCE_MY_ANSWER_QUESTION}?page=${page}`,
+      );
       const list = res?.data?.data ?? res?.data ?? [];
       const rawList = Array.isArray(list) ? list : [];
-      setMyAnswers(rawList.map(mapQuestionFromApi));
+      const mapped = rawList.map(mapQuestionFromApi);
+      setMyAnswers(prev => (append ? [...(prev ?? []), ...mapped] : mapped));
+      setAnswersPage(page);
+      setAnswersHasMore(rawList.length > 0);
     } catch (e) {
-      setMyAnswers([]);
+      if (!append) setMyAnswers([]);
+      setAnswersHasMore(false);
+    } finally {
+      if (append) setAnswersLoadingMore(false);
     }
   };
 
@@ -1120,7 +1164,20 @@ const MyTimeline = ({navigation}) => {
   const loadAll = useCallback(async (uid) => {
     if (uid == null) return;
     setLoading(true);
-    await Promise.all([fetchMyPosts(), fetchMyQuestions(), fetchMyAnswers()]);
+    // Reset posts pagination on full reload
+    setPostsPage(1);
+    setPostsHasMore(true);
+    // Reset questions pagination on full reload
+    setQuestionsPage(1);
+    setQuestionsHasMore(true);
+    // Reset answers pagination on full reload
+    setAnswersPage(1);
+    setAnswersHasMore(true);
+    await Promise.all([
+      fetchMyPosts(1, false),
+      fetchMyQuestions(1, false),
+      fetchMyAnswers(1, false),
+    ]);
     setLoading(false);
   }, []);
 
@@ -1832,6 +1889,28 @@ const MyTimeline = ({navigation}) => {
             data={data}
             keyExtractor={item => String(item.id)}
             renderItem={renderItem}
+            onEndReached={() => {
+              if (refreshing || loading) return;
+
+              if (activeTab === 'my_post') {
+                if (!postsHasMore || postsLoadingMore) return;
+                fetchMyPosts(postsPage + 1, true);
+                return;
+              }
+
+              if (activeTab === 'my_questions') {
+                if (!questionsHasMore || questionsLoadingMore) return;
+                fetchMyQuestions(questionsPage + 1, true);
+                return;
+              }
+
+              if (activeTab === 'my_answers') {
+                if (!answersHasMore || answersLoadingMore) return;
+                fetchMyAnswers(answersPage + 1, true);
+                return;
+              }
+            }}
+            onEndReachedThreshold={0.5}
             contentContainerStyle={
               activeTab === 'my_post' ||
               activeTab === 'my_questions' ||
@@ -1847,6 +1926,15 @@ const MyTimeline = ({navigation}) => {
                 : null
             }
             ListEmptyComponent={ListEmpty}
+            ListFooterComponent={
+              (activeTab === 'my_post' && postsLoadingMore) ||
+              (activeTab === 'my_questions' && questionsLoadingMore) ||
+              (activeTab === 'my_answers' && answersLoadingMore) ? (
+                <View style={{paddingVertical: 16}}>
+                  <ActivityIndicator size="small" color={COLORS.primary} />
+                </View>
+              ) : null
+            }
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} color={COLORS.primary} />
             }
