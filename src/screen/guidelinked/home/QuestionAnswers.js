@@ -935,10 +935,10 @@ const QuestionAnswers = ({navigation}) => {
               {item.answers.map((ans, idx) => {
                 const previewText = (ans.paidContentPreview || '').trim();
                 const priceNum = Number(ans.price);
-                const price = Number.isFinite(priceNum) ? priceNum : 49;
+                const price = Number.isFinite(priceNum) ? priceNum : 0;
                 const priceDisplay = Number.isFinite(price)
                   ? price.toFixed(2)
-                  : '49.00';
+                  : '0.00';
                 const answerUserId = ans.answerUserId;
                 const unlockKey = `${item.id}_${answerUserId ?? idx}`;
                 const isUnlocked =
@@ -1046,7 +1046,7 @@ const QuestionAnswers = ({navigation}) => {
                               <Text style={styles.payViewAnswerBtnText}>
                                 {unlockingKey === unlockKey
                                   ? 'Processing…'
-                                  : 'Pay & View Answer'}
+                                  : `Pay $${priceDisplay} to view Answer`}
                               </Text>
                             </TouchableOpacity>
                           </>
